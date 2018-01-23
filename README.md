@@ -39,6 +39,13 @@ Unterseite:
       - EnableInterrupt
       - Low-Power
  - Board einstellen:
-  <img src="https://github.com/jp112sdl/Beispiel_AskSinPP/blob/master/Images/arduino_settings_board.png" width=400>
+   - Board: `Arduino Pro or Pro Mini` <br>
+   - Prozessor: `ATmega328P (3.3V, 8 MHz)` <br>
+   - Port: `COM-Port` des FTDI Adapters <br>
+   
+<img src="https://github.com/jp112sdl/Beispiel_AskSinPP/blob/master/Images/arduino_settings_board.png" width=400>
+
+- Sketch öffnen
+
 
     
