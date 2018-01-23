@@ -15,6 +15,10 @@
 **Der Anschluss des Sende-Tasters**
 - **erfolgt an A0 / GND!**
 
+**Der Anschluss der Batterien**
+- **+ an VCC**
+- **- an GND**
+
 **_Mithilfe von Kupferlackdraht kann das Funkmodul platzspared "huckepack" am Arduino Pro Mini angeschlossen werden:_**
 ![wiring2](Images/arduino_bottom.jpg)
 
