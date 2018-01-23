@@ -74,4 +74,4 @@ Unterseite:
   - "gesicherte" Übertragung deaktivieren
 <img src="https://github.com/jp112sdl/Beispiel_AskSinPP/blob/master/Images/hm_config1.png" width=400>
 
-
+**AES Verschlüsselung für die gesicherte Übertragung ist prinzipiell auch möglich, ist aber etwas kompliziert zu beschreiben (auch wenn die Sache selbst relativ unkompliziert ist**
