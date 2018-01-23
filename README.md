@@ -60,5 +60,12 @@ Unterseite:
     - Hochladen
 
 ### Anlernen an HomeMatic
+- Geräte anlernen -> HM-Gerät anlernen klicken
+- **Config-Taster** am Arduino Pro Mini **kurz** drücken
+- das neue Gerät erscheint anschließend im Posteingang
+<img src="https://github.com/jp112sdl/Beispiel_AskSinPP/blob/master/Images/hm_anlernen1.png" width=400>
+
+- "gesicherte" Übertragung deaktivieren
+<img src="https://github.com/jp112sdl/Beispiel_AskSinPP/blob/master/Images/hm_config1.png" width=400>
 
 
