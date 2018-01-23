@@ -71,7 +71,7 @@ Unterseite:
     - Hochladen
     
 Die Pinbelegungen des Arduino stehen in den jeweiligen Sketchen der Projektdateien.<br>
-Beim 1-Kanal Paniksender bspw. Config-Taster an Pin **8** und Button1 an **A0**:
+Beim 1-Kanal Paniksender z.B.: Config-Taster an Pin **8** und Button1 an **A0**:
 <img src="https://github.com/jp112sdl/Beispiel_AskSinPP/blob/master/Images/sketch_pins.png" width=400>
 
 
