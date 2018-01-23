@@ -12,7 +12,8 @@
 ### Verdrahtung
 ![wiring](Images/wiring_arduino_cc1101.png)
 
-**Der Anschluss des Sende-Tasters erfolgt an A0 / GND!**
+**Der Anschluss des Sende-Tasters**
+- **erfolgt an A0 / GND!**
 
 **_Mithilfe von Kupferlackdraht kann das Funkmodul platzspared "huckepack" am Arduino Pro Mini angeschlossen werden:_**
 ![wiring2](Images/arduino_bottom.jpg)
@@ -26,3 +27,18 @@ Unterseite:
 ![flash](Images/ftdi_flash.jpg)
 
 ## Softwareabteilung
+### Arduino IDE
+- Arduino IDE [herunterladen](https://www.arduino.cc/en/Main/Software) und installieren
+- AskSinPP Bibliothek als [ZIP herunterladen](https://github.com/pa-pa/AskSinPP/archive/master.zip) 
+- notwendige Bibliotheken in der Arduino IDE hinzufügen:
+  - Sketch -> Bibliothek einbinden -> .ZIP-Bibliothek hinzufügen
+    - heruntergeladene AskSinPP Bibliothek ZIP-Datei auswählen
+  - Sketch -> Bibliothek einbinden -> Bibliotheken verwalten
+    - im Suchfeld folgende Bibliotheken suchen und installieren:
+      - TimerOne
+      - EnableInterrupt
+      - Low-Power
+ - Board einstellen:
+  <img src="https://github.com/jp112sdl/Beispiel_AskSinPP/blob/master/Images/arduino_settings_board.png" width=400>
+
+    
