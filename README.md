@@ -1,4 +1,10 @@
-# Beispiel einer Umsetzung eines HM-[1-Kanal Senders](https://github.com/pa-pa/AskSinPP/tree/master/examples/HM-RC-P1) mittels Arduino Pro mini, CC1101 und [AskSinPP Library](https://github.com/pa-pa/AskSinPP).
+# Beispiel für den Nachbau
+## eines HM-[1-Kanal Senders](https://github.com/pa-pa/AskSinPP/tree/master/examples/HM-RC-P1) mittels Arduino Pro mini, CC1101 und [AskSinPP](https://github.com/pa-pa/AskSinPP) Library. 
+### Mithilfe dieser Bibliothek lässt sich sehr preiswert eine Vielzahl von HomeMatic[-Sensoren, -Aktoren und -Sendern](https://github.com/pa-pa/AskSinPP/tree/master/examples) nachbauen!
+
+
+![proto1](Images/hm-rc-p1.jpg)
+
 
 ## Hardwaresektion
 ### Bauteile
