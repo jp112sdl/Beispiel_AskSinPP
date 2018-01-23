@@ -10,6 +10,7 @@
 - 2x AA Batterien
 
 ### Verdrahtung
+_allgemeingültige Verdrahtung (Anschluss CC1101 an Arduino Pro Mini) auch für andere AskSinPP-Projekte_
 ![wiring](Images/wiring_arduino_cc1101.png)
 
 **Der Anschluss des Sende-Tasters**
