@@ -38,8 +38,8 @@ DallasTemperature sensors(&ourWire);
 
 // define all device properties
 const struct DeviceInfo PROGMEM devinfo = {
-  {0x34, 0x56, 0x79},     // Device ID
-  "JPTH10I002",           // Device Serial
+  {0x34, 0x56, 0x81},     // Device ID
+  "JPTH10I004",           // Device Serial
   {0x00, 0x3f},           // Device Model
   0x10,                   // Firmware Version
   as::DeviceType::THSensor, // Device Type
