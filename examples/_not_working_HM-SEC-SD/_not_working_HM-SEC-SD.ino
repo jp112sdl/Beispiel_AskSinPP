@@ -50,7 +50,7 @@ const struct DeviceInfo PROGMEM devinfo = {
     "JPSECSD001",           // Device Serial
     {0x00,0x42},            // Device Model
     0x01,                   // Firmware Version
-    as::DeviceType::Swi,    // Device Type
+    as::DeviceType::SmokeDetector,    // Device Type
     {0x01,0x00}             // Info Bytes
 };
 
@@ -91,9 +91,9 @@ public:
 } hal;
 
 DEFREGISTER(Reg0,DREG_INTKEY,DREG_CYCLICINFOMSG,MASTERID_REGS,DREG_TRANSMITTRYMAX,DREG_SABOTAGEMSG)
-class SCList0 : public RegList0<Reg0> {
+class SecSDList0 : public RegList0<Reg0> {
 public:
-  SCList0(uint16_t addr) : RegList0<Reg0>(addr) {}
+  SecSDList0(uint16_t addr) : RegList0<Reg0>(addr) {}
   void defaults () {
     clear();
     cycleInfoMsg(true);
@@ -103,9 +103,9 @@ public:
 };
 
 DEFREGISTER(Reg1,CREG_AES_ACTIVE,CREG_MSGFORPOS,CREG_EVENTDELAYTIME,CREG_LEDONTIME,CREG_TRANSMITTRYMAX)
-class SCList1 : public RegList1<Reg1> {
+class SecSDList1 : public RegList1<Reg1> {
 public:
-  SCList1 (uint16_t addr) : RegList1<Reg1>(addr) {}
+  SecSDList1 (uint16_t addr) : RegList1<Reg1>(addr) {}
   void defaults () {
     clear();
     msgForPosA(1); // CLOSED
@@ -118,12 +118,12 @@ public:
 };
 
 
-typedef ThreeStateChannel<Hal,SCList0,SCList1,DefList4,PEERS_PER_CHANNEL> ChannelType;
-class SCType : public ThreeStateDevice<Hal,ChannelType,1,SCList0, CYCLETIME> {
+typedef ThreeStateChannel<Hal,SecSDList0,SecSDList1,DefList4,PEERS_PER_CHANNEL> ChannelType;
+class SecSDType : public ThreeStateDevice<Hal,ChannelType,1,SecSDList0, CYCLETIME> {
 public:
-  typedef ThreeStateDevice<Hal,ChannelType,1,SCList0, CYCLETIME> TSDevice;
-  SCType(const DeviceInfo& info,uint16_t addr) : TSDevice(info,addr) {}
-  virtual ~SCType () {}
+  typedef ThreeStateDevice<Hal,ChannelType,1,SecSDList0, CYCLETIME> TSDevice;
+  SecSDType(const DeviceInfo& info,uint16_t addr) : TSDevice(info,addr) {}
+  virtual ~SecSDType () {}
 
   virtual void configChanged () {
     TSDevice::configChanged();
@@ -138,8 +138,8 @@ public:
   }
 };
 
-SCType sdev(devinfo,0x20);
-ConfigButton<SCType> cfgBtn(sdev);
+SecSDType sdev(devinfo,0x20);
+ConfigButton<SecSDType> cfgBtn(sdev);
 
 void setup () {
   DINIT(57600,ASKSIN_PLUS_PLUS_IDENTIFIER);
