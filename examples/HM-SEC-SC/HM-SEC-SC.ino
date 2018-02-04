@@ -41,6 +41,7 @@
 // number of available peers per channel
 #define PEERS_PER_CHANNEL 10
 #define CYCLETIME seconds2ticks(60UL * 60 * 16)
+
 // all library classes are placed in the namespace 'as'
 using namespace as;
 
@@ -164,4 +165,3 @@ void loop() {
     hal.activity.savePower<Sleep<> >(hal);
   }
 }
-

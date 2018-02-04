@@ -36,22 +36,21 @@
 #define CONFIG_BUTTON_PIN 8
 
 #define SENS1_PIN 14
-#define SABOTAGE_PIN 15
 
 // number of available peers per channel
 #define PEERS_PER_CHANNEL 10
-#define CYCLETIME seconds2ticks(60UL * 60 * 1)
+#define CYCLETIME seconds2ticks(60UL * 60 * 16)
 
 // all library classes are placed in the namespace 'as'
 using namespace as;
 
 // define all device properties
 const struct DeviceInfo PROGMEM devinfo = {
-    {0x03,0x11,0x34},       // Device ID
-    "JPSCO00001",           // Device Serial
-    {0x00,0xC7},            // Device Model
-    0x06,                   // Firmware Version
-    as::DeviceType::ThreeStateSensor, // Device Type
+    {0x03,0x12,0x34},       // Device ID
+    "JPSECSD001",           // Device Serial
+    {0x00,0x42},            // Device Model
+    0x01,                   // Firmware Version
+    as::DeviceType::Swi,    // Device Type
     {0x01,0x00}             // Info Bytes
 };
 
@@ -92,9 +91,9 @@ public:
 } hal;
 
 DEFREGISTER(Reg0,DREG_INTKEY,DREG_CYCLICINFOMSG,MASTERID_REGS,DREG_TRANSMITTRYMAX,DREG_SABOTAGEMSG)
-class SCOList0 : public RegList0<Reg0> {
+class SCList0 : public RegList0<Reg0> {
 public:
-  SCOList0(uint16_t addr) : RegList0<Reg0>(addr) {}
+  SCList0(uint16_t addr) : RegList0<Reg0>(addr) {}
   void defaults () {
     clear();
     cycleInfoMsg(true);
@@ -104,27 +103,27 @@ public:
 };
 
 DEFREGISTER(Reg1,CREG_AES_ACTIVE,CREG_MSGFORPOS,CREG_EVENTDELAYTIME,CREG_LEDONTIME,CREG_TRANSMITTRYMAX)
-class SCOList1 : public RegList1<Reg1> {
+class SCList1 : public RegList1<Reg1> {
 public:
-  SCOList1 (uint16_t addr) : RegList1<Reg1>(addr) {}
+  SCList1 (uint16_t addr) : RegList1<Reg1>(addr) {}
   void defaults () {
     clear();
     msgForPosA(1); // CLOSED
     msgForPosB(2); // OPEN
-    aesActive(false);
-    eventDelaytime(0);
+    // aesActive(false);
+    // eventDelaytime(0);
     ledOntime(100);
     transmitTryMax(6);
   }
 };
 
 
-typedef ThreeStateChannel<Hal,SCOList0,SCOList1,DefList4,PEERS_PER_CHANNEL> ChannelType;
-class SCOType : public ThreeStateDevice<Hal,ChannelType,1,SCOList0, CYCLETIME> {
+typedef ThreeStateChannel<Hal,SCList0,SCList1,DefList4,PEERS_PER_CHANNEL> ChannelType;
+class SCType : public ThreeStateDevice<Hal,ChannelType,1,SCList0, CYCLETIME> {
 public:
-  typedef ThreeStateDevice<Hal,ChannelType,1,SCOList0, CYCLETIME> TSDevice;
-  SCOType(const DeviceInfo& info,uint16_t addr) : TSDevice(info,addr) {}
-  virtual ~SCOType () {}
+  typedef ThreeStateDevice<Hal,ChannelType,1,SCList0, CYCLETIME> TSDevice;
+  SCType(const DeviceInfo& info,uint16_t addr) : TSDevice(info,addr) {}
+  virtual ~SCType () {}
 
   virtual void configChanged () {
     TSDevice::configChanged();
@@ -139,15 +138,15 @@ public:
   }
 };
 
-SCOType sdev(devinfo,0x20);
-ConfigButton<SCOType> cfgBtn(sdev);
+SCType sdev(devinfo,0x20);
+ConfigButton<SCType> cfgBtn(sdev);
 
 void setup () {
   DINIT(57600,ASKSIN_PLUS_PLUS_IDENTIFIER);
   sdev.init(hal);
   buttonISR(cfgBtn,CONFIG_BUTTON_PIN);
   const uint8_t posmap[4] = {Positions::PosA,Positions::PosB,Positions::PosA,Positions::PosB};
-  sdev.channel(1).init(SENS1_PIN,SENS1_PIN,SABOTAGE_PIN,posmap);
+  sdev.channel(1).init(SENS1_PIN,SENS1_PIN, posmap);
   sdev.initDone();
 }
 
