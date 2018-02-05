@@ -90,7 +90,7 @@ public:
   }
 } hal;
 
-DEFREGISTER(Reg0,DREG_INTKEY,DREG_CYCLICINFOMSG,MASTERID_REGS,DREG_TRANSMITTRYMAX,DREG_SABOTAGEMSG)
+DEFREGISTER(Reg0,DREG_INTKEY,DREG_CYCLICINFOMSG,MASTERID_REGS,DREG_TRANSMITTRYMAX)
 class SecSDList0 : public RegList0<Reg0> {
 public:
   SecSDList0(uint16_t addr) : RegList0<Reg0>(addr) {}
@@ -98,7 +98,6 @@ public:
     clear();
     cycleInfoMsg(true);
     transmitDevTryMax(6);
-    sabotageMsg(true);
   }
 };
 
