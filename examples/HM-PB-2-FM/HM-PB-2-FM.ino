@@ -40,7 +40,7 @@ using namespace as;
 const struct DeviceInfo PROGMEM devinfo = {
     {0x02,0xBF,0x01},       // Device ID
     "JPPB2FM001",           // Device Serial
-    {0x00,0x6B},            // Device Model
+    {0x00,0xBF},            // Device Model
     0x14,                   // Firmware Version
     as::DeviceType::Remote, // Device Type
     {0x00,0x00}             // Info Bytes
