@@ -73,8 +73,12 @@ class LuxEventMsg : public Message {
       if ( batlow == true ) {
         t1 |= 0x80; // set bat low bit
       }
-      Message::init(0xe, msgcnt, 0x53, BIDI, t1, t2);
-      pload[2] = lux;
+      Message::init(0xe, msgcnt, 0x53, Message::BIDI, 1 & 0x3f,msgcnt++);
+      pload[0] = lux;// & 0xff;
+      
+
+      //Message::init(0xe, msgcnt, 0x53, BIDI, t1, t2);
+      //pload[2] = lux;
     }
 };
 
@@ -91,7 +95,7 @@ class LuxChannel : public Channel<Hal, List1, EmptyList, List4, PEERS_PER_CHANNE
     // here we do the measurement
     void measure () {
       DPRINT("Measure...\n");
-      lux = 100;
+      lux = 10000;
     }
 
     virtual void trigger (__attribute__ ((unused)) AlarmClock& clock) {
