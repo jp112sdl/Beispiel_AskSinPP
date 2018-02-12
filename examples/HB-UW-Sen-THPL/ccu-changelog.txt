@@ -1,0 +1,26 @@
+For the firmware update, the Sensor must switched off and switched on again.
+
+1. Take at least one battery out of the sensor.
+2. Press the config button and insert the battery in the sensor.
+3. Still holding the config button a few seconds after inserting the batteries.
+4. Bootloader should starts.
+
+Changelog:
+
+Version Beta 0.14
+-------------
+
+** Improvement
+ * Add new register:
+   - Fix millis() overflow bug. Now, the sensor stays in sleep mode after 49 days, so battery should not drained anymore
+   - Battery voltage now measured with 1 digit only.
+
+Version Beta 0.13
+-------------
+
+** Improvement
+ * Add new register:
+   - transmitTryMax: How often should the sensor try to send data without ack.
+   - lowBatLimit: Defined the battery voltage used for low battery detection.
+   - ledMode: Switch the device LED on or off while sent out data.
+   - altitude: Define the sensor-altitude for calculating the air pressure at sea level.
