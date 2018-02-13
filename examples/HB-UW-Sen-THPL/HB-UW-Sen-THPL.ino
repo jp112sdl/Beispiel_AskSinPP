@@ -1,13 +1,13 @@
-#include "WetterSensor.h"
+#include "HB-UW-Sen-THPL.h"
 #include "Register.h"															// configuration sheet
 
 //- load library's --------------------------------------------------------------------------------------------------------
 #include <Wire.h>																// i2c library, needed for bmp085 or bmp180
-#include <TSL2561.h>
-#include <Sensirion.h>
 #include <BMP085.h>
+#include <BH1750.h>
 #include <Buttons.h>															// remote buttons library
-#include <Sensor_SHT10_BMP085_TSL2561.h>
+#include "Sensor_BMP180_BH1750.h"
+
 
 // homematic communication
 HM::s_jumptable jTbl[] = {														// jump table for HM communication
@@ -20,11 +20,10 @@ HM::s_jumptable jTbl[] = {														// jump table for HM communication
 
 Buttons button[1];																// declare remote button object
 
-Sensirion sht10 = Sensirion(A4,A5);
 BMP085 bmp085;
-TSL2561 tsl2561;
+BH1750 bh1750;
 
-Sensors_SHT10_BMP085_TSL2561 sensTHPL;
+Sensors_BMP180_BH1750 sensTHPL;
 
 // main functions
 void setup() {
@@ -67,7 +66,7 @@ void setup() {
 	button[0].config(8, NULL);													// configure button on specific pin and handover a function pointer to the main sketch
 
 	sensTHPL.regInHM(1, &hm);													// register sensor class in hm
-	sensTHPL.config(A4, A5, 0, &sht10, &bmp085, &tsl2561);						// data pin, clock pin and timing - 0 means HM calculated timing, every number above will taken in milliseconds
+	sensTHPL.config(A4, A5, 0, &bmp085, &bh1750);						// data pin, clock pin and timing - 0 means HM calculated timing, every number above will taken in milliseconds
 
 	byte rr = MCUSR;
 	MCUSR =0;
@@ -77,20 +76,6 @@ void setup() {
 	// initialization done, we blink 3 times
 	hm.statusLed.config(4, 4);													// configure the status led pin
 	hm.statusLed.set(STATUSLED_BOTH, STATUSLED_MODE_BLINKFAST, 3);
-
-	#ifdef US_100
-		// Initialize Pins for US-100 Ultrasonic distance sensor
-		pinMode(US_100_PIN_VCC,      OUTPUT);
-		digitalWrite(US_100_PIN_VCC, LOW);										// US-100 Power (off)
-
-		pinMode(US_100_PIN_TRIGGER,      OUTPUT);
-		digitalWrite(US_100_PIN_TRIGGER, LOW);									// US-100 Trigger (off)
-
-		pinMode(US_100_PIN_ECHO, INPUT);										// US-100 Echo as input pin
-
-		pinMode(US_100_PIN_GND,       OUTPUT);
-		digitalWrite(US_100_PIN_GND,  LOW);										// US-100 Power-GND (must be off every time)
-	#endif
 
 }
 

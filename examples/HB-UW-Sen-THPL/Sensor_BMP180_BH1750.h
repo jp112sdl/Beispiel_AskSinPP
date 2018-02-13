@@ -6,8 +6,8 @@
  *         Dirk Hoffmann dirk@fhem.forum
  */
 
-#ifndef SENSOR_SHT10_BMP085_TSL2561_H
-#define SENSOR_SHT10_BMP085_TSL2561_H
+#ifndef SENSOR_BMP180_BH1750_H
+#define SENSOR_BMP180_BH1750_H
 
 #if defined(ARDUINO) && ARDUINO >= 100
 	#include "Arduino.h"
@@ -21,38 +21,30 @@
 #include "utility/PinChangeIntHandler.h"
 
 #include <Wire.h>
-#include <Sensirion.h>
 #include <BMP085.h>
-#include <TSL2561.h>
+#include <BH1750.h>
 
-//#define US_100
-#ifdef US_100
-	#define US_100_PIN_VCC         5
-	#define US_100_PIN_GND         9
-	#define US_100_PIN_TRIGGER     6
-	#define US_100_PIN_ECHO        7
-#endif
 
-#define SHT10_BMP085_TSL2561 Sensors_SHT10_BMP085_TSL2561						// module name as macro to overcome the problem of renaming functions all the time
+#define BMP180_BH1750 Sensors_BMP180_BH1750						// module name as macro to overcome the problem of renaming functions all the time
 //#define DM_DBG																// debug message flag
 
-#define SHT10_BMP085_TSL2561_nACTION_MEASURE_INIT    1
-#define SHT10_BMP085_TSL2561_nACTION_MEASURE_L       2
-#define SHT10_BMP085_TSL2561_nACTION_CALC_L          3
-#define SHT10_BMP085_TSL2561_nACTION_MEASURE_THP     4
-#define SHT10_BMP085_TSL2561_nACTION_TRANSMIT        5
+#define BMP180_BH1750_nACTION_MEASURE_INIT    1
+#define BMP180_BH1750_nACTION_MEASURE_L       2
+#define BMP180_BH1750_nACTION_CALC_L          3
+#define BMP180_BH1750_nACTION_MEASURE_THP     4
+#define BMP180_BH1750_nACTION_TRANSMIT        5
 
-#define SHT10_BMP085_TSL2561_MAX_MEASURE_TIME       50
-#define SHT10_BMP085_TSL2561_MINIMAL_CYCLE_LENGTH  480							// minimal cycle length in 250ms units
+#define BMP180_BH1750_MAX_MEASURE_TIME       50
+#define BMP180_BH1750_MINIMAL_CYCLE_LENGTH  480							// minimal cycle length in 250ms units
 
 const uint8_t peerOdd[] =    {};												// default settings for list3 or list4
 const uint8_t peerEven[] =   {};
 const uint8_t peerSingle[] = {};
 
-class SHT10_BMP085_TSL2561 {
+class BMP180_BH1750 {
 	// user code here
 	public:
-		void config(uint8_t data, uint8_t sck, uint16_t timing, Sensirion *tPtr, BMP085 *pPtr, TSL2561 *lPtr);
+		void config(uint8_t data, uint8_t sck, uint16_t timing, BMP085 *pPtr, BH1750 *lPtr);
 
 		// mandatory functions for every new module to communicate within HM protocol stack
 		uint8_t  modStat;														// module status byte, needed for list3 modules to answer status requests
@@ -79,9 +71,8 @@ class SHT10_BMP085_TSL2561 {
 	protected:
 
 	private:
-		Sensirion *sht10;
 		BMP085 *bm180;
-		TSL2561 *tsl2561;
+		BH1750 *bh1750;
 
 		uint8_t  nAction;
 		uint32_t nTime;
@@ -93,24 +84,14 @@ class SHT10_BMP085_TSL2561 {
 		uint16_t tPres;
 		int16_t  tAltitude;														// altitude for calculating air pressure at sea level
 
-		uint8_t tsl2561InitCount;
-		unsigned int tsl2561Data0;
-		unsigned int tsl2561Data1;
 		uint32_t tLux;
 
-		uint8_t tsl2561IntFlag;
-
-		boolean gain;    // Gain setting, 0 = X1, 1 = X16;
-
-		void tsl2561_ISR(uint8_t pinState);
+		uint8_t bh1750IntFlag;
 
 		uint32_t calcSendSlot(void);
-		uint8_t  poll_measureLightInit();
 		void     poll_measureCalcLight(void);
 		void     poll_measureTHP(void);
 		void     poll_transmit(void);
-
-		uint32_t us100Measuer();
 };
 
 
