@@ -49,7 +49,7 @@ const struct DeviceInfo PROGMEM devinfo = {
 typedef AvrSPI<10, 11, 12, 13> SPIType;
 typedef Radio<SPIType, 2> RadioType;
 typedef StatusLed<4> LedType;
-typedef AskSin<LedType, BatterySensor, RadioType> BaseHal;
+typedef AskSin<LedType, BatterySensorUni<21, 7>, RadioType> BaseHal;
 class Hal : public BaseHal {
   public:
     void init (const HMID& id) {
@@ -136,7 +136,6 @@ class WeatherChannel : public Channel<Hal, List1, EmptyList, List4, PEERS_PER_CH
 
 typedef MultiChannelDevice<Hal, WeatherChannel, 1> WeatherType;
 WeatherType sdev(devinfo, 0x20);
-
 ConfigButton<WeatherType> cfgBtn(sdev);
 
 void setup () {
