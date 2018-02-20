@@ -27,7 +27,7 @@
 #if USE_ADRESS_SECTION == 0
 	//#define DEVICE_TYPE        0xF1, 0x01										// The model-ID    0xF1 0x01 = DIY (HB-UW-Sen-THPL-I)
 	#define DEVICE_TYPE          0xF1, 0x02 									// The model-ID    0xF1 0x02 = DIY (HB-UW-Sen-THPL-O)
-	#define DEVICE_SERIAL        'U','W','S','0','0','0','0','0','0','2'		// The serial 10 bytes, needed for pairing   (Default for serial flash tool)
+	#define DEVICE_SERIAL        'U','W','S','0','0','0','0','0','0','1'		// The serial 10 bytes, needed for pairing   (Default for serial flash tool)
 	#define DEVICE_ADDRESS       0x19, 0x15, 0x17								// The HM-ID 3 bytes, needed for pairing     (Default for flash tool)
 #endif
 
