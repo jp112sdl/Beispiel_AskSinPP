@@ -6,6 +6,8 @@
 // define this to read the device id, serial and device type from bootloader section
 // #define USE_OTA_BOOTLOADER
 
+//LOWBAT message not working
+
 #define EI_NOTEXTERNAL
 #include <EnableInterrupt.h>
 #include <AskSinPP.h>
@@ -33,7 +35,7 @@ using namespace as;
 
 // define all device properties
 const struct DeviceInfo PROGMEM devinfo = {
-  {0x34, 0xfd, 0x80},     // Device ID
+  {0x34, 0xfd, 0x01},     // Device ID
   "JPLIO00001",           // Device Serial
   {0x00, 0xfd},           // Device Model
   0x01,                   // Firmware Version
@@ -54,7 +56,7 @@ class Hal : public BaseHal {
       BaseHal::init(id);
       // measure battery every 1h
       battery.init(seconds2ticks(60UL * 60), sysclock);
-      battery.low(35);
+      battery.low(22);
       battery.critical(19);
     }
 
@@ -66,11 +68,8 @@ class Hal : public BaseHal {
 class LuxEventMsg : public Message {
   public:
     void init(uint8_t msgcnt, uint32_t lux, bool batlow) {
-      uint8_t t1 = 0x00;
-      if ( batlow == true ) {
-        t1 = 0x80; 
-      }
-      Message::init(0xf, msgcnt, 0x53, BIDI, t1, 0x00);
+      uint8_t t1 = ( batlow == true ) ? 0x80 : 0x00;
+      Message::init(0xf, msgcnt, 0x54, BIDI, t1, msgcnt++);
       pload[0] = (lux >> 32)  & 0xff;
       pload[1] = (lux >> 16) & 0xff;
       pload[2] = (lux >> 8) & 0xff;
@@ -91,11 +90,11 @@ class LuxChannel : public Channel<Hal, List1, EmptyList, List4, PEERS_PER_CHANNE
     // here we do the measurement
     void measure () {
       DPRINT("Measure...\n");
-      lux = 700000;
+      lux = 800;
     }
 
     uint8_t flags () const {
-      return hal.battery.low() ? 0x80 : 0x00;
+      return 0;
     }
 
     virtual void trigger (__attribute__ ((unused)) AlarmClock& clock) {
