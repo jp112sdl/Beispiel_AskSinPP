@@ -6,12 +6,11 @@
 // define this to read the device id, serial and device type from bootloader section
 // #define USE_OTA_BOOTLOADER
 
-//LOWBAT message not working
-
 #define EI_NOTEXTERNAL
 #include <EnableInterrupt.h>
 #include <AskSinPP.h>
 #include <LowPower.h>
+#include <sensors/Bh1750.h>
 
 #include <MultiChannelDevice.h>
 
@@ -27,7 +26,7 @@
 #define PEERS_PER_CHANNEL 6
 
 //seconds between sending messages
-#define MSG_INTERVAL 10
+#define MSG_INTERVAL 20
 
 // all library classes are placed in the namespace 'as'
 using namespace as;
@@ -39,7 +38,7 @@ const struct DeviceInfo PROGMEM devinfo = {
   "JPLIO00001",           // Device Serial
   {0x00, 0xfd},           // Device Model
   0x01,                   // Firmware Version
-  0x54, // Device Type
+  0x53, // Device Type
   {0x01, 0x00}            // Info Bytes
 };
 
@@ -55,7 +54,7 @@ class Hal : public BaseHal {
     void init (const HMID& id) {
       BaseHal::init(id);
       // measure battery every 1h
-      battery.init(seconds2ticks(60UL * 60), sysclock);
+      battery.init(seconds2ticks(60UL *60), sysclock);
       battery.low(22);
       battery.critical(19);
     }
@@ -67,9 +66,8 @@ class Hal : public BaseHal {
 
 class LuxEventMsg : public Message {
   public:
-    void init(uint8_t msgcnt, uint32_t lux, bool batlow) {
-      uint8_t t1 = ( batlow == true ) ? 0x80 : 0x00;
-      Message::init(0xf, msgcnt, 0x54, BIDI, t1, msgcnt++);
+    void init(uint8_t msgcnt, uint32_t lux) {
+      Message::init(0xf, msgcnt, 0x53, RPTEN | BCAST, 0x00, 0xc1);
       pload[0] = (lux >> 32)  & 0xff;
       pload[1] = (lux >> 16) & 0xff;
       pload[2] = (lux >> 8) & 0xff;
@@ -79,9 +77,11 @@ class LuxEventMsg : public Message {
 
 class LuxChannel : public Channel<Hal, List1, EmptyList, List4, PEERS_PER_CHANNEL, List0>, public Alarm {
 
-    LuxEventMsg msg;
-    uint32_t         lux;
-    uint16_t        millis;
+    LuxEventMsg   lmsg;
+    uint32_t      lux;
+    uint16_t      millis;
+
+    Bh1750<>     bh1750;
 
   public:
     LuxChannel () : Channel(), Alarm(5), lux(0), millis(0) {}
@@ -89,12 +89,16 @@ class LuxChannel : public Channel<Hal, List1, EmptyList, List4, PEERS_PER_CHANNE
 
     // here we do the measurement
     void measure () {
-      DPRINT("Measure...\n");
-      lux = 800;
+      DPRINT("Measure... ");
+      bh1750.measure();
+      lux = bh1750.brightness();
+      DDEC(lux);
+      DPRINTLN(" lux");
     }
 
     uint8_t flags () const {
-      return 0;
+      uint8_t flags = this->device().battery().low() ? 0x80 : 0x00;
+      return flags;
     }
 
     virtual void trigger (__attribute__ ((unused)) AlarmClock& clock) {
@@ -104,8 +108,9 @@ class LuxChannel : public Channel<Hal, List1, EmptyList, List4, PEERS_PER_CHANNE
       clock.add(*this);
       measure();
 
-      msg.init(msgcnt, lux, device().battery().low());
-      device().sendPeerEvent(msg, *this);
+      lmsg.init(msgcnt, lux * 100);
+      this->changed(true);
+      device().sendPeerEvent(lmsg, *this);
     }
 
     uint32_t delay () {
@@ -114,6 +119,7 @@ class LuxChannel : public Channel<Hal, List1, EmptyList, List4, PEERS_PER_CHANNE
     void setup(Device<Hal, List0>* dev, uint8_t number, uint16_t addr) {
       Channel::setup(dev, number, addr);
       sysclock.add(*this);
+      bh1750.init();
     }
 
     uint8_t status () const {
