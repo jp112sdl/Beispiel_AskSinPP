@@ -27,7 +27,7 @@
 #define PEERS_PER_CHANNEL 6
 
 //seconds between sending messages
-#define MSG_INTERVAL 20
+byte _txMindelay = 0x08;
 
 // all library classes are placed in the namespace 'as'
 using namespace as;
@@ -55,7 +55,7 @@ class Hal : public BaseHal {
     void init (const HMID& id) {
       BaseHal::init(id);
       // measure battery every 1h
-      battery.init(seconds2ticks(60UL *60), sysclock);
+      battery.init(seconds2ticks(60UL * 60), sysclock);
       battery.low(22);
       battery.critical(19);
     }
@@ -65,28 +65,28 @@ class Hal : public BaseHal {
     }
 } hal;
 
-DEFREGISTER(LiReg0,MASTERID_REGS,DREG_CYCLICINFOMSGDIS,DREG_LOCALRESETDISABLE,DREG_TRANSMITTRYMAX)
+DEFREGISTER(LiReg0, MASTERID_REGS, DREG_CYCLICINFOMSGDIS, DREG_LOCALRESETDISABLE, DREG_TRANSMITTRYMAX)
 class LiList0 : public RegList0<LiReg0> {
-public:
-  LiList0 (uint16_t addr) : RegList0<LiReg0>(addr) {}
-  void defaults () {
-    clear();
-    //cyclicInfoMsgDis(0);
-    // intKeyVisible(false);
-    // localResetDisable(false);
-  }
+  public:
+    LiList0 (uint16_t addr) : RegList0<LiReg0>(addr) {}
+    void defaults () {
+      clear();
+      //cyclicInfoMsgDis(0);
+      // intKeyVisible(false);
+      // localResetDisable(false);
+    }
 };
 
-DEFREGISTER(LiReg1,CREG_AES_ACTIVE,CREG_TX_MINDELAY,CREG_TX_THRESHOLD_PERCENT)
+DEFREGISTER(LiReg1, CREG_AES_ACTIVE, CREG_TX_MINDELAY, CREG_TX_THRESHOLD_PERCENT)
 class LiList1 : public RegList1<LiReg1> {
-public:
-  LiList1 (uint16_t addr) : RegList1<LiReg1>(addr) {}
-  void defaults () {
-    clear();
-    // aesActive(false);
-    txMindelay(8);
-    //txThresholdPercent(0);
-  }
+  public:
+    LiList1 (uint16_t addr) : RegList1<LiReg1>(addr) {}
+    void defaults () {
+      clear();
+      aesActive(false);
+      txMindelay(8);
+      //txThresholdPercent(0);
+    }
 };
 
 class LuxEventMsg : public Message {
@@ -131,7 +131,7 @@ class LuxChannel : public Channel<Hal, LiList1, EmptyList, List4, PEERS_PER_CHAN
       // reactivate for next measure
       tick = delay();
       clock.add(*this);
-      
+
       measure();
 
       this->changed(true);
@@ -140,8 +140,12 @@ class LuxChannel : public Channel<Hal, LiList1, EmptyList, List4, PEERS_PER_CHAN
     }
 
     uint32_t delay () {
-      return seconds2ticks(MSG_INTERVAL);
+      _txMindelay = this->getList1().txMindelay();
+      DPRINT("TX Delay = ");
+      DDECLN(_txMindelay);
+      return seconds2ticks(_txMindelay);
     }
+
     void setup(Device<Hal, LiList0>* dev, uint8_t number, uint16_t addr) {
       Channel::setup(dev, number, addr);
       sysclock.add(*this);
@@ -154,19 +158,7 @@ class LuxChannel : public Channel<Hal, LiList1, EmptyList, List4, PEERS_PER_CHAN
 };
 
 
-class LuxType : public MultiChannelDevice<Hal,LuxChannel,1,LiList0> {
-public:
-  typedef MultiChannelDevice<Hal,LuxChannel,1,LiList0> TSDevice;
-  LuxType(const DeviceInfo& info,uint16_t addr) : TSDevice(info,addr) {}
-  virtual ~LuxType () {}
-
-  virtual void configChanged () {
-    TSDevice::configChanged();
-    DPRINTLN("config changed");
-    DDECLN(getConfigByte(0x00)); // ???
-  }
-};
-
+typedef MultiChannelDevice<Hal, LuxChannel, 1, LiList0> LuxType;
 
 LuxType sdev(devinfo, 0x20);
 ConfigButton<LuxType> cfgBtn(sdev);
