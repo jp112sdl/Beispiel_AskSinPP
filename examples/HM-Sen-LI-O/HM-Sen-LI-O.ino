@@ -10,6 +10,7 @@
 #include <EnableInterrupt.h>
 #include <AskSinPP.h>
 #include <LowPower.h>
+#include <Register.h>
 #include <sensors/Bh1750.h>
 
 #include <MultiChannelDevice.h>
@@ -64,6 +65,30 @@ class Hal : public BaseHal {
     }
 } hal;
 
+DEFREGISTER(LiReg0,MASTERID_REGS,DREG_CYCLICINFOMSGDIS,DREG_LOCALRESETDISABLE,DREG_TRANSMITTRYMAX)
+class LiList0 : public RegList0<LiReg0> {
+public:
+  LiList0 (uint16_t addr) : RegList0<LiReg0>(addr) {}
+  void defaults () {
+    clear();
+    //cyclicInfoMsgDis(0);
+    // intKeyVisible(false);
+    // localResetDisable(false);
+  }
+};
+
+DEFREGISTER(LiReg1,CREG_AES_ACTIVE,CREG_TX_MINDELAY,CREG_TX_THRESHOLD_PERCENT)
+class LiList1 : public RegList1<LiReg1> {
+public:
+  LiList1 (uint16_t addr) : RegList1<LiReg1>(addr) {}
+  void defaults () {
+    clear();
+    // aesActive(false);
+    txMindelay(8);
+    //txThresholdPercent(0);
+  }
+};
+
 class LuxEventMsg : public Message {
   public:
     void init(uint8_t msgcnt, uint32_t lux) {
@@ -75,7 +100,7 @@ class LuxEventMsg : public Message {
     }
 };
 
-class LuxChannel : public Channel<Hal, List1, EmptyList, List4, PEERS_PER_CHANNEL, List0>, public Alarm {
+class LuxChannel : public Channel<Hal, LiList1, EmptyList, List4, PEERS_PER_CHANNEL, LiList0>, public Alarm {
 
     LuxEventMsg   lmsg;
     uint32_t      lux;
@@ -106,17 +131,18 @@ class LuxChannel : public Channel<Hal, List1, EmptyList, List4, PEERS_PER_CHANNE
       // reactivate for next measure
       tick = delay();
       clock.add(*this);
+      
       measure();
 
-      lmsg.init(msgcnt, lux * 100);
       this->changed(true);
+      lmsg.init(msgcnt, lux * 100);
       device().sendPeerEvent(lmsg, *this);
     }
 
     uint32_t delay () {
       return seconds2ticks(MSG_INTERVAL);
     }
-    void setup(Device<Hal, List0>* dev, uint8_t number, uint16_t addr) {
+    void setup(Device<Hal, LiList0>* dev, uint8_t number, uint16_t addr) {
       Channel::setup(dev, number, addr);
       sysclock.add(*this);
       bh1750.init();
@@ -127,9 +153,22 @@ class LuxChannel : public Channel<Hal, List1, EmptyList, List4, PEERS_PER_CHANNE
     }
 };
 
-typedef MultiChannelDevice<Hal, LuxChannel, 1> LuxType;
-LuxType sdev(devinfo, 0x20);
 
+class LuxType : public MultiChannelDevice<Hal,LuxChannel,1,LiList0> {
+public:
+  typedef MultiChannelDevice<Hal,LuxChannel,1,LiList0> TSDevice;
+  LuxType(const DeviceInfo& info,uint16_t addr) : TSDevice(info,addr) {}
+  virtual ~LuxType () {}
+
+  virtual void configChanged () {
+    TSDevice::configChanged();
+    DPRINTLN("config changed");
+    DDECLN(getConfigByte(0x00)); // ???
+  }
+};
+
+
+LuxType sdev(devinfo, 0x20);
 ConfigButton<LuxType> cfgBtn(sdev);
 
 void setup () {
