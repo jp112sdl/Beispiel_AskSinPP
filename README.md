@@ -1,5 +1,5 @@
-# Beispiel für die Verwendung der [AskSinPP](https://github.com/pa-pa/AskSinPP) Bibliothek zum Nachbau
-## eines HM-[1-Kanal Senders](https://github.com/pa-pa/AskSinPP/tree/master/examples/HM-RC-P1) mittels Arduino Pro mini, CC1101 und [AskSinPP](https://github.com/pa-pa/AskSinPP) Arduino-Bibliothek. 
+# Beispiel für die Verwendung der [AskSinPP](https://github.com/pa-pa/AskSinPP) Bibliothek
+## zum Nachbau eines HM-[1-Kanal Senders](https://github.com/pa-pa/AskSinPP/tree/master/examples/HM-RC-P1) mittels Arduino Pro mini, CC1101 und [AskSinPP](https://github.com/pa-pa/AskSinPP) Arduino-Bibliothek. 
 ### Mithilfe dieser Bibliothek lässt sich sehr preiswert eine Vielzahl von HomeMatic[-Sensoren, -Aktoren und -Sendern](https://github.com/pa-pa/AskSinPP/tree/master/examples) nachbauen!
 
 
