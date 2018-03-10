@@ -47,7 +47,7 @@ using namespace as;
 
 // define all device properties
 const struct DeviceInfo PROGMEM devinfo = {
-    {0x03,0x11,0x34},       // Device ID
+    {0x03,0xc7,0x01},       // Device ID
     "JPSCO00001",           // Device Serial
     {0x00,0xC7},            // Device Model
     0x06,                   // Firmware Version
@@ -146,7 +146,7 @@ void setup () {
   DINIT(57600,ASKSIN_PLUS_PLUS_IDENTIFIER);
   sdev.init(hal);
   buttonISR(cfgBtn,CONFIG_BUTTON_PIN);
-  const uint8_t posmap[4] = {Positions::PosA,Positions::PosB,Positions::PosA,Positions::PosB};
+  const uint8_t posmap[4] = {Position::State::PosB,Position::State::PosC,Position::State::PosA,Position::State::PosB};
   sdev.channel(1).init(SENS1_PIN,SENS1_PIN,SABOTAGE_PIN,posmap);
   sdev.initDone();
 }
