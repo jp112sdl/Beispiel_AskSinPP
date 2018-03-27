@@ -10,7 +10,7 @@
 #include <EnableInterrupt.h>
 #include <AskSinPP.h>
 #include <LowPower.h>
-#include <DHT.h>
+#include <sensors/Dht.h>
 
 #include <MultiChannelDevice.h>
 
@@ -28,12 +28,10 @@
 #define PEERS_PER_CHANNEL 6
 
 //seconds between sending messages
-#define MSG_INTERVAL 400
+#define MSG_INTERVAL 180
 
 // all library classes are placed in the namespace 'as'
 using namespace as;
-
-DHT dht(DHT22_PIN, DHT22);
 
 // define all device properties
 const struct DeviceInfo PROGMEM devinfo = {
@@ -86,6 +84,7 @@ class WeatherChannel : public Channel<Hal, List1, EmptyList, List4, PEERS_PER_CH
     int16_t         temp;
     uint8_t         humidity;
     uint16_t        millis;
+    Dht<DHT22_PIN,DHT22>      dht22;
 
   public:
     WeatherChannel () : Channel(), Alarm(5), temp(0), humidity(0), millis(0) {}
@@ -94,14 +93,9 @@ class WeatherChannel : public Channel<Hal, List1, EmptyList, List4, PEERS_PER_CH
     // here we do the measurement
     void measure () {
       DPRINT("Measure...\n");
-      float h = dht.readHumidity();
-      float t = dht.readTemperature();
-      while (isnan(t) || isnan(h)) {
-        h = dht.readHumidity();
-        t = dht.readTemperature();
-      }
-      humidity = h;
-      temp = t * 10.0;
+      dht22.measure();
+      humidity = dht22.humidity();
+      temp = dht22.temperature();
       DPRINT("T/H = " + String(temp) + "/" + String(humidity) + "\n");
     }
 
@@ -123,6 +117,7 @@ class WeatherChannel : public Channel<Hal, List1, EmptyList, List4, PEERS_PER_CH
     void setup(Device<Hal, List0>* dev, uint8_t number, uint16_t addr) {
       Channel::setup(dev, number, addr);
       sysclock.add(*this);
+      dht22.init();
     }
 
     uint8_t status () const {
