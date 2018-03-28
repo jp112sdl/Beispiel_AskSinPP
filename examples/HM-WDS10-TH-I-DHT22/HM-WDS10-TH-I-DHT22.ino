@@ -28,14 +28,14 @@
 #define PEERS_PER_CHANNEL 6
 
 //seconds between sending messages
-#define MSG_INTERVAL 180
+#define MSG_INTERVAL 220
 
 // all library classes are placed in the namespace 'as'
 using namespace as;
 
 // define all device properties
 const struct DeviceInfo PROGMEM devinfo = {
-  {0x34, 0x56, 0x78},     // Device ID
+  {0x00, 0x3f, 0x10},     // Device ID
   "JPTH10I001",           // Device Serial
   {0x00, 0x3f},           // Device Model
   0x10,                   // Firmware Version
@@ -73,7 +73,7 @@ class WeatherEventMsg : public Message {
       if ( batlow == true ) {
         t1 |= 0x80; // set bat low bit
       }
-      Message::init(0xc, msgcnt, 0x70, BIDI, t1, t2);
+      Message::init(0xc, msgcnt, 0x70, BCAST, t1, t2);
       pload[0] = humidity;
     }
 };
