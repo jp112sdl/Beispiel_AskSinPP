@@ -16,7 +16,7 @@
 - 2x AA Batterien
 
 ### Gehäuse
-- bei Thingiverse [Link](https://www.thingiverse.com/thing:2840228) gibt es für den Temp-/Feuchtesensor HM-WDS10-TH-I-DHT22 ein super praktisches Gehäuse!
+- bei Thingiverse ([Link](https://www.thingiverse.com/thing:2840228)) gibt es für den Temp-/Feuchtesensor HM-WDS10-TH-I-DHT22 ein super praktisches Gehäuse!
 
 ### Verdrahtung
 _allgemeingültige Verdrahtung (Anschluss CC1101 an Arduino Pro Mini) auch für andere AskSinPP-Projekte_
