@@ -93,7 +93,11 @@ class WeatherChannel : public Channel<Hal, List1, EmptyList, List4, PEERS_PER_CH
     // here we do the measurement
     void measure () {
       DPRINT("Measure...\n");
-      dht22.measure();
+      if (dht22.measure()) {
+        DPRINTLN("DHT22 measurement ok.");
+      } else {
+        DPRINTLN("DHT22 measurement NOT ok.");        
+      }
       humidity = dht22.humidity();
       temp = dht22.temperature();
       DPRINT("T/H = " + String(temp) + "/" + String(humidity) + "\n");
