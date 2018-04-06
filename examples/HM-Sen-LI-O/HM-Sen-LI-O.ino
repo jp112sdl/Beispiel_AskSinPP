@@ -101,9 +101,20 @@ class LuxEventMsg : public Message {
     }
 };
 
+class BatEventMsg : public Message {
+  public:
+    void init(uint8_t msgcnt, bool batlow) {
+      Message::init(0xe, msgcnt, 0x10, BCAST, 0x06, 0x01);
+      pload[0] = 0x00;
+      pload[1] = batlow ? 0x80 : 0x00;
+      pload[2] = batlow ? 0x00 : 0x80;
+    }
+};
+
 class LuxChannel : public Channel<Hal, LiList1, EmptyList, List4, PEERS_PER_CHANNEL, LiList0>, public Alarm {
 
     LuxEventMsg   lmsg;
+    BatEventMsg   bmsg;
     uint32_t      lux;
     uint16_t      millis;
 
@@ -138,9 +149,13 @@ class LuxChannel : public Channel<Hal, LiList1, EmptyList, List4, PEERS_PER_CHAN
 
       measure();
 
-      this->changed(true);
+      //this->changed(true);
+      
       lmsg.init(msgcnt, lux * 100);
       device().sendPeerEvent(lmsg, *this);
+      msgcnt = device().nextcount();
+      bmsg.init(msgcnt, this->device().battery().low());
+      device().sendPeerEvent(bmsg, *this);
     }
 
     uint32_t delay () {
