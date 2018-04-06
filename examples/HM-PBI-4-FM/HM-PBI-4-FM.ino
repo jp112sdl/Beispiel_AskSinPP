@@ -5,16 +5,13 @@
 
 // define this to read the device id, serial and device type from bootloader section
 // #define USE_OTA_BOOTLOADER
-
 #define EI_NOTEXTERNAL
 #include <EnableInterrupt.h>
-#include <SPI.h>  // after including SPI Library - we can use LibSPI class
 #include <AskSinPP.h>
 #include <LowPower.h>
 
 #include <MultiChannelDevice.h>
 #include <Remote.h>
-
 
 // we use a Pro Mini
 // Arduino pin for the LED
@@ -30,7 +27,6 @@
 #define BTN2_PIN 15
 #define BTN3_PIN 16
 #define BTN4_PIN 17
-
 
 // number of available peers per channel
 #define PEERS_PER_CHANNEL 10
@@ -51,7 +47,7 @@ const struct DeviceInfo PROGMEM devinfo = {
 /**
  * Configure the used hardware
  */
-typedef LibSPI<10> SPIType;
+typedef AvrSPI<10, 11, 12, 13> SPIType;
 typedef Radio<SPIType,2> RadioType;
 typedef DualStatusLed<5,4> LedType;
 typedef AskSin<LedType,BatterySensor,RadioType> HalType;
