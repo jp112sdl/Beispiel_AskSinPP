@@ -84,7 +84,7 @@ class WeatherChannel : public Channel<Hal, List1, EmptyList, List4, PEERS_PER_CH
     int16_t         temp;
     uint8_t         humidity;
     uint16_t        millis;
-    Dht<DHT22_PIN,DHT22>      dht22;
+    Dht<DHT22_PIN, DHT22, 4>      dht22;
 
   public:
     WeatherChannel () : Channel(), Alarm(5), temp(0), humidity(0), millis(0) {}
@@ -96,7 +96,7 @@ class WeatherChannel : public Channel<Hal, List1, EmptyList, List4, PEERS_PER_CH
       if (dht22.measure()) {
         DPRINTLN("DHT22 measurement ok.");
       } else {
-        DPRINTLN("DHT22 measurement NOT ok.");        
+        DPRINTLN("DHT22 measurement NOT ok.");
       }
       humidity = dht22.humidity();
       temp = dht22.temperature();
