@@ -64,9 +64,8 @@ Unterseite:
          - HM-RC-P1
          
    - Anpassungen:
-     - gerade wenn man mehrere Geräte des selben Typs verwenden will, muss man für jedes Gerät eine eigene Seriennummer vergeben! Es sind dabei sowohl die `Device ID` (Hexadezimal) als auch die `Device Serial` (Freitext) zu ändern!
+     - gerade wenn man mehrere Geräte des selben Typs verwenden will, muss man für jedes Gerät eine eigene Seriennummer vergeben! Es sind dabei sowohl die `Device ID` (Hexadezimal) als auch die `Device Serial` (Freitext) zu ändern!
      
-     
      <img src="https://github.com/jp112sdl/Beispiel_AskSinPP/blob/master/Images/sketch_serial.png" width=400>
          
 - Sketch hochladen:
