@@ -110,6 +110,8 @@ class LuxChannel : public Channel<Hal, LiList1, EmptyList, List4, PEERS_PER_CHAN
     //Bh1750<>     bh1750;
     Tsl2561<>      tsl2561;
 
+    uint8_t last_flags = 0xff;
+
   public:
     LuxChannel () : Channel(), Alarm(5), lux(0), millis(0) {}
     virtual ~LuxChannel () {}
@@ -137,8 +139,12 @@ class LuxChannel : public Channel<Hal, LiList1, EmptyList, List4, PEERS_PER_CHAN
       clock.add(*this);
 
       measure();
+      
+      if (last_flags != flags()) {
+        this->changed(true);
+        last_flags = flags();
+      }
 
-      this->changed(true);
       lmsg.init(msgcnt, lux * 100);
       device().sendPeerEvent(lmsg, *this);
     }
