@@ -6,12 +6,6 @@
 // define this to read the device id, serial and device type from bootloader section
 // #define USE_OTA_BOOTLOADER
 
-#define CFG_LOWACTIVE_BYTE 0x00
-#define CFG_LOWACTIVE_ON   0x01
-#define CFG_LOWACTIVE_OFF  0x00
-
-#define DEVICE_CONFIG CFG_LOWACTIVE_OFF
-
 #define EI_NOTEXTERNAL
 #include <EnableInterrupt.h>
 #include <AskSinPP.h>
@@ -27,8 +21,10 @@
 // B0 == PIN 8 on Pro Mini
 #define CONFIG_BUTTON_PIN 8
 
-#define RELAY1_PIN 17
-#define RELAY2_PIN 16
+//set to 0x01 if the RELAY should be switched on LOW level
+#define LOW_ACTIVE 0x00  
+#define RELAY1_PIN 17    //A3
+#define RELAY2_PIN 16    //A2
 
 #define BUTTON1_PIN 6
 #define BUTTON2_PIN 3
@@ -53,28 +49,16 @@ const struct DeviceInfo PROGMEM devinfo = {
    Configure the used hardware
 */
 typedef AvrSPI<10, 11, 12, 13> RadioSPI;
-typedef AskSin<StatusLed<4>, NoBattery, Radio<RadioSPI, 2> > Hal;
+typedef AskSin<StatusLed<LED_PIN>, NoBattery, Radio<RadioSPI, 2> > Hal;
 
 // setup the device with channel type and number of channels
-typedef MultiChannelDevice<Hal, SwitchChannel<Hal, PEERS_PER_CHANNEL, List0>, 4> SwitchType;
+typedef MultiChannelDevice<Hal, SwitchChannel<Hal, PEERS_PER_CHANNEL, List0>, 2> SwitchType;
 
 Hal hal;
 SwitchType sdev(devinfo, 0x20);
 ConfigButton<SwitchType> cfgBtn(sdev);
 InternalButton<SwitchType> btn1(sdev, 1);
 InternalButton<SwitchType> btn2(sdev, 2);
-
-// if A0 and A1 connected
-// we use LOW for ON and HIGH for OFF
-bool checkLowActive () {
-  pinMode(14, OUTPUT); // A0
-  pinMode(15, INPUT_PULLUP); // A1
-  digitalWrite(15, HIGH);
-  digitalWrite(14, LOW);
-  bool result = digitalRead(15) == LOW;
-  digitalWrite(14, HIGH);
-  return result;
-}
 
 void initPeerings (bool first) {
   // create internal peerings - CCU2 needs this
@@ -88,24 +72,17 @@ void initPeerings (bool first) {
   }
 }
 
-void initModelType () {
-  uint8_t model[2];
-  sdev.getDeviceModel(model);
-  sdev.channels(2);
-}
-
 void setup () {
   DINIT(57600, ASKSIN_PLUS_PLUS_IDENTIFIER);
   bool first = sdev.init(hal);
-  bool low = false;
-  sdev.channel(1).init(RELAY1_PIN, low);
-  sdev.channel(2).init(RELAY2_PIN, low);
+  sdev.channel(1).init(RELAY1_PIN, LOW_ACTIVE);
+  sdev.channel(2).init(RELAY2_PIN, LOW_ACTIVE);
 
   buttonISR(cfgBtn, CONFIG_BUTTON_PIN);
   buttonISR(btn1, BUTTON1_PIN);
   buttonISR(btn2, BUTTON2_PIN);
 
-  initModelType();
+  sdev.channels(2);
   initPeerings(first);
   sdev.initDone();
 }
