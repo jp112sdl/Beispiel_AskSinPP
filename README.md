@@ -35,6 +35,12 @@ _allgemeingültige Verdrahtung (Anschluss CC1101 an Arduino Pro Mini) auch für 
 Unterseite:
 ![wiring3](Images/arduino_top.jpg)
 
+## Universalplatine
+Wer eine eigene Platine herstellen möchte, kann auf eine Auswahl verschiedener vorgefertigter Layouts zurückgreifen.
+z.B.:
+- [PCB](https://github.com/alexreinert/PCB) von alexreinert
+- [HMSensor](https://github.com/pa-pa/HMSensor) von pa-pa
+
 ### Anschluss des FTDI Adapters zum Flashen
 - Um die Schaltung sehr kompakt zu halten, verzichte ich auf das Anlöten eines Steckverbinders. Es reicht aus, wenn man die Pins des FTDI Adapters durch die Lötbohrungen steckt. Während des Flash-Vorgangs verkantet man beide Platinen leicht, damit die Kontaktierung gegeben ist.
 
