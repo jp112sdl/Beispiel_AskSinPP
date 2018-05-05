@@ -13,7 +13,7 @@
 
 #include <MultiChannelDevice.h>
 // https://github.com/spease/Sensirion.git
-#include <Sensors/Bme280.h>
+#include <sensors/Bme280.h>
 
 // we use a Pro Mini
 // Arduino pin for the LED
