@@ -75,12 +75,14 @@ class WaOdList0 : public RegList0<WaOdReg0> {
     }
 };
 
-DEFREGISTER(WaOdReg1, CREG_WATER_UPPER_THRESHOLD_CH, CREG_WATER_LOWER_THRESHOLD_CH, CREG_CASE_DESIGN, CREG_CASE_HIGH, CREG_FILL_LEVEL, CREG_CASE_WIDTH, CREG_CASE_LENGTH, CREG_MEASURE_LENGTH, CREG_USE_CUSTOM_CALIBRATION)
+DEFREGISTER(WaOdReg1, CREG_WATER_UPPER_THRESHOLD_CH, CREG_WATER_LOWER_THRESHOLD_CH, CREG_CASE_DESIGN, CREG_CASE_HIGH, CREG_FILL_LEVEL, CREG_CASE_WIDTH, CREG_CASE_LENGTH, CREG_MEASURE_LENGTH, CREG_USE_CUSTOM_CALIBRATION, CREG_LEDONTIME, CREG_TRANSMITTRYMAX)
 class WaOdList1 : public RegList1<WaOdReg1> {
   public:
     WaOdList1 (uint16_t addr) : RegList1<WaOdReg1>(addr) {}
     void defaults () {
       clear();
+      caseLength(100);
+      caseWidth(100);
     }
 };
 
@@ -140,15 +142,17 @@ class FillingChannel : public Channel<Hal, WaOdList1, EmptyList, List4, PEERS_PE
 
     void configChanged() {
       DPRINTLN(F("*List1 changed"));
+      DPRINT(F("*ledOntime ")); DDECLN(this->getList1().ledOntime());
+      DPRINT(F("*transmitTryMax ")); DDECLN(this->getList1().transmitTryMax());
       DPRINT(F("*waterUpperThreshold ")); DDECLN(this->getList1().waterUpperThreshold());
       DPRINT(F("*waterLowerThreshold ")); DDECLN(this->getList1().waterLowerThreshold());
       DPRINT(F("*caseDesign ")); DDECLN(this->getList1().caseDesign());
       DPRINT(F("*caseHigh ")); DDECLN(this->getList1().caseHigh());
       DPRINT(F("*caseWidth ")); DDECLN(this->getList1().caseWidth());
       DPRINT(F("*caseLength ")); DDECLN(this->getList1().caseLength());
-      DPRINT(F("*meaLength ")); DDECLN(this->getList1().measureLength());
+      DPRINT(F("*measureLength ")); DDECLN(this->getList1().measureLength());
       DPRINT(F("*fillLevel ")); DDECLN(this->getList1().fillLevel());
-      DPRINT(F("*useCustom ")); DDECLN(this->getList1().useCustomCalibration());
+      DPRINT(F("*useCustomCalibration ")); DDECLN(this->getList1().useCustomCalibration());
     }
 
     uint8_t flags () const {
