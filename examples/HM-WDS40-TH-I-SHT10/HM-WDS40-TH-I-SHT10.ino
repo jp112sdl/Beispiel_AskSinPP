@@ -10,16 +10,15 @@
 #include <EnableInterrupt.h>
 #include <AskSinPP.h>
 #include <LowPower.h>
-#include <sensors/Dht.h>
 
 #include <MultiChannelDevice.h>
+// https://github.com/spease/Sensirion.git
+#include <Sensirion.h>
 
 // we use a Pro Mini
 // Arduino pin for the LED
-// D5 == PIN 5 on Pro Mini
-#define LED_PIN 5
 // D4 == PIN 4 on Pro Mini
-#define DHT22_PIN 4
+#define LED_PIN 4
 // Arduino pin for the config button
 // B0 == PIN 8 on Pro Mini
 #define CONFIG_BUTTON_PIN 8
@@ -28,16 +27,17 @@
 #define PEERS_PER_CHANNEL 6
 
 //seconds between sending messages
-#define MSG_INTERVAL 220
+#define MSG_INTERVAL 180
 
 // all library classes are placed in the namespace 'as'
 using namespace as;
 
 // define all device properties
 const struct DeviceInfo PROGMEM devinfo = {
-  {0x00, 0x3f, 0x10},     // Device ID
-  "JPTH10I001",           // Device Serial
-  {0x00, 0x3f},           // Device Model
+  {0x34, 0x56, 0x80},     // Device ID
+  "JPTH10I003",           // Device Serial
+  //{0x00, 0x3d},           // Device Model Outdoor
+  {0x00, 0x3f},           // Device Model Indoor
   0x10,                   // Firmware Version
   as::DeviceType::THSensor, // Device Type
   {0x01, 0x00}            // Info Bytes
@@ -48,7 +48,7 @@ const struct DeviceInfo PROGMEM devinfo = {
 */
 typedef AvrSPI<10, 11, 12, 13> SPIType;
 typedef Radio<SPIType, 2> RadioType;
-typedef StatusLed<5> LedType;
+typedef StatusLed<4> LedType;
 typedef AskSin<LedType, BatterySensor, RadioType> BaseHal;
 class Hal : public BaseHal {
   public:
@@ -73,7 +73,7 @@ class WeatherEventMsg : public Message {
       if ( batlow == true ) {
         t1 |= 0x80; // set bat low bit
       }
-      Message::init(0xc, msgcnt, 0x70, BCAST, t1, t2);
+      Message::init(0xc, msgcnt, 0x70, (msgcnt % 20 == 1) ? BIDI : BCAST, t1, t2);
       pload[0] = humidity;
     }
 };
@@ -83,23 +83,26 @@ class WeatherChannel : public Channel<Hal, List1, EmptyList, List4, PEERS_PER_CH
     WeatherEventMsg msg;
     int16_t         temp;
     uint8_t         humidity;
+
+    Sensirion       sht10 = Sensirion(A4, A5);
     uint16_t        millis;
-    Dht<DHT22_PIN, DHT22, 4>      dht22;
 
   public:
     WeatherChannel () : Channel(), Alarm(5), temp(0), humidity(0), millis(0) {}
     virtual ~WeatherChannel () {}
 
+
     // here we do the measurement
     void measure () {
       DPRINT("Measure...\n");
-      if (dht22.measure()) {
-        DPRINTLN("DHT22 measurement ok.");
-      } else {
-        DPRINTLN("DHT22 measurement NOT ok.");
+      uint16_t rawData;
+      if ( sht10.measTemp(&rawData) == 0) {
+        float t = sht10.calcTemp(rawData);
+        temp = t * 10;
+        if ( sht10.measHumi(&rawData) == 0 ) {
+          humidity = sht10.calcHumi(rawData, t);
+        }
       }
-      humidity = dht22.humidity();
-      temp = dht22.temperature();
       DPRINT("T/H = " + String(temp) + "/" + String(humidity) + "\n");
     }
 
@@ -117,11 +120,9 @@ class WeatherChannel : public Channel<Hal, List1, EmptyList, List4, PEERS_PER_CH
     uint32_t delay () {
       return seconds2ticks(MSG_INTERVAL);
     }
-
     void setup(Device<Hal, List0>* dev, uint8_t number, uint16_t addr) {
       Channel::setup(dev, number, addr);
       sysclock.add(*this);
-      dht22.init();
     }
 
     uint8_t status () const {
@@ -135,7 +136,6 @@ class WeatherChannel : public Channel<Hal, List1, EmptyList, List4, PEERS_PER_CH
 
 typedef MultiChannelDevice<Hal, WeatherChannel, 1> WeatherType;
 WeatherType sdev(devinfo, 0x20);
-
 ConfigButton<WeatherType> cfgBtn(sdev);
 
 void setup () {
@@ -152,3 +152,4 @@ void loop() {
     hal.activity.savePower<Sleep<>>(hal);
   }
 }
+

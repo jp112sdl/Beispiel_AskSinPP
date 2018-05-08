@@ -12,14 +12,13 @@
 #include <LowPower.h>
 
 #include <MultiChannelDevice.h>
-#include <DallasTemperature.h>
+// https://github.com/spease/Sensirion.git
+#include <sensors/Bme280.h>
 
 // we use a Pro Mini
 // Arduino pin for the LED
-// D5 == PIN 5 on Pro Mini
-#define LED_PIN 5
 // D4 == PIN 4 on Pro Mini
-#define DS18B20_PIN 4
+#define LED_PIN 4
 // Arduino pin for the config button
 // B0 == PIN 8 on Pro Mini
 #define CONFIG_BUTTON_PIN 8
@@ -28,19 +27,16 @@
 #define PEERS_PER_CHANNEL 6
 
 //seconds between sending messages
-#define MSG_INTERVAL 400
+#define MSG_INTERVAL 180
 
 // all library classes are placed in the namespace 'as'
 using namespace as;
-
-OneWire ourWire(DS18B20_PIN);
-DallasTemperature sensors(&ourWire);
 
 // define all device properties
 const struct DeviceInfo PROGMEM devinfo = {
   {0x34, 0x56, 0x81},     // Device ID
   "JPTH10I004",           // Device Serial
-  {0x00, 0x3f},           // Device Model
+  {0x00, 0x3f},           // Device Model Indoor
   0x10,                   // Firmware Version
   as::DeviceType::THSensor, // Device Type
   {0x01, 0x00}            // Info Bytes
@@ -51,14 +47,14 @@ const struct DeviceInfo PROGMEM devinfo = {
 */
 typedef AvrSPI<10, 11, 12, 13> SPIType;
 typedef Radio<SPIType, 2> RadioType;
-typedef StatusLed<5> LedType;
+typedef StatusLed<4> LedType;
 typedef AskSin<LedType, BatterySensor, RadioType> BaseHal;
 class Hal : public BaseHal {
   public:
     void init (const HMID& id) {
       BaseHal::init(id);
       // measure battery every 1h
-      battery.init(seconds2ticks(60UL*60),sysclock);
+      battery.init(seconds2ticks(60UL * 60), sysclock);
       battery.low(22);
       battery.critical(19);
     }
@@ -76,7 +72,7 @@ class WeatherEventMsg : public Message {
       if ( batlow == true ) {
         t1 |= 0x80; // set bat low bit
       }
-      Message::init(0xc, msgcnt, 0x70, BIDI, t1, t2);
+      Message::init(0xc, msgcnt, 0x70, (msgcnt % 20 == 1) ? BIDI : BCAST, t1, t2);
       pload[0] = humidity;
     }
 };
@@ -84,25 +80,22 @@ class WeatherEventMsg : public Message {
 class WeatherChannel : public Channel<Hal, List1, EmptyList, List4, PEERS_PER_CHANNEL, List0>, public Alarm {
 
     WeatherEventMsg msg;
-    int16_t         temp;
-    uint8_t         humidity;
+
+    Bme280          bme280;
     uint16_t        millis;
 
   public:
-    WeatherChannel () : Channel(), Alarm(5), temp(0), humidity(0), millis(0) {}
+    WeatherChannel () : Channel(), Alarm(5), millis(0) {}
     virtual ~WeatherChannel () {}
-    
+
+
     // here we do the measurement
     void measure () {
       DPRINT("Measure...\n");
-      sensors.requestTemperatures();
-      float t = sensors.getTempCByIndex(0);
-
-      humidity = 0;
-      temp = t * 10.0;
-      DPRINT("T/H = " + String(temp)+"/"+ String(humidity) + "\n");
+      bme280.measure();
+      DPRINT("T/H = ");DDEC(bme280.temperature());DPRINT("/");DDECLN(bme280.humidity());
     }
-    
+
     virtual void trigger (__attribute__ ((unused)) AlarmClock& clock) {
       uint8_t msgcnt = device().nextcount();
       // reactivate for next measure
@@ -110,7 +103,7 @@ class WeatherChannel : public Channel<Hal, List1, EmptyList, List4, PEERS_PER_CH
       clock.add(*this);
       measure();
 
-      msg.init(msgcnt, temp, humidity, device().battery().low());
+      msg.init(msgcnt, bme280.temperature(),bme280.humidity(), device().battery().low());
       device().sendPeerEvent(msg, *this);
     }
 
@@ -119,6 +112,7 @@ class WeatherChannel : public Channel<Hal, List1, EmptyList, List4, PEERS_PER_CH
     }
     void setup(Device<Hal, List0>* dev, uint8_t number, uint16_t addr) {
       Channel::setup(dev, number, addr);
+      bme280.init();
       sysclock.add(*this);
     }
 
@@ -133,12 +127,10 @@ class WeatherChannel : public Channel<Hal, List1, EmptyList, List4, PEERS_PER_CH
 
 typedef MultiChannelDevice<Hal, WeatherChannel, 1> WeatherType;
 WeatherType sdev(devinfo, 0x20);
-
 ConfigButton<WeatherType> cfgBtn(sdev);
 
 void setup () {
   DINIT(57600, ASKSIN_PLUS_PLUS_IDENTIFIER);
-  sensors.begin();
   sdev.init(hal);
   buttonISR(cfgBtn, CONFIG_BUTTON_PIN);
   sdev.initDone();
@@ -151,3 +143,4 @@ void loop() {
     hal.activity.savePower<Sleep<>>(hal);
   }
 }
+
