@@ -27,7 +27,7 @@
 #define PEERS_PER_CHANNEL 6
 
 //seconds between sending messages
-#define MSG_INTERVAL 400
+#define MSG_INTERVAL 180
 
 // all library classes are placed in the namespace 'as'
 using namespace as;
@@ -73,7 +73,7 @@ class WeatherEventMsg : public Message {
       if ( batlow == true ) {
         t1 |= 0x80; // set bat low bit
       }
-      Message::init(0xc, msgcnt, 0x70, BIDI, t1, t2);
+      Message::init(0xc, msgcnt, 0x70, (msgcnt % 20 == 1) ? BIDI : BCAST, t1, t2);
       pload[0] = humidity;
     }
 };
