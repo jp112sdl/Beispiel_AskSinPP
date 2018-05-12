@@ -13,7 +13,7 @@
 
 #include <Register.h>
 #include <MultiChannelDevice.h>
-#include <Sensors/Ntc.h>
+#include <sensors/Ntc.h>
 
 // Arduino Pro mini 8 Mhz
 // Arduino pin for the config button
