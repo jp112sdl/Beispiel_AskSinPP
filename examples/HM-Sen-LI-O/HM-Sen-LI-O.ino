@@ -141,7 +141,7 @@ class LuxChannel : public Channel<Hal, LiList1, EmptyList, List4, PEERS_PER_CHAN
       clock.add(*this);
 
       measure();
-      
+
       if (last_flags != flags()) {
         this->changed(true);
         last_flags = flags();
@@ -170,7 +170,6 @@ class LuxChannel : public Channel<Hal, LiList1, EmptyList, List4, PEERS_PER_CHAN
     }
 };
 
-
 typedef MultiChannelDevice<Hal, LuxChannel, 1, LiList0> LuxType;
 
 LuxType sdev(devinfo, 0x20);
@@ -187,6 +186,9 @@ void loop() {
   bool worked = hal.runready();
   bool poll = sdev.pollRadio();
   if ( worked == false && poll == false ) {
+    if ( hal.battery.critical() ) {
+      hal.activity.sleepForever(hal);
+    }
     hal.activity.savePower<Sleep<>>(hal);
   }
 }
