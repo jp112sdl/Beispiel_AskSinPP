@@ -108,7 +108,9 @@ class LuxChannel : public Channel<Hal, LiList1, EmptyList, List4, PEERS_PER_CHAN
     uint16_t      millis;
 
     //Bh1750<>     bh1750;
-    Tsl2561<>      tsl2561;
+    //Tsl2561<>                   tsl2561; // Brücke zwischen L und GND
+    //Tsl2561<TSL2561_ADDR_HIGH>  tsl2561; // Brücke zwischen H und GND
+    Tsl2561<TSL2561_ADDR_FLOAT> tsl2561; // keine Brücke gesetzt
 
     uint8_t last_flags = 0xff;
 
