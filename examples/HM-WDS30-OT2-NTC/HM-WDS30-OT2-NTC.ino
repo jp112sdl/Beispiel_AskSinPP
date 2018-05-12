@@ -13,9 +13,7 @@
 
 #include <Register.h>
 #include <MultiChannelDevice.h>
-
-#include <OneWire.h>
-#include <sensors/Ds18b20.h>
+#include <Sensors/Ntc.h>
 
 // Arduino Pro mini 8 Mhz
 // Arduino pin for the config button
@@ -24,11 +22,23 @@
 // number of available peers per channel
 #define PEERS_PER_CHANNEL 6
 
-//DS18B20 Sensors connected to pin
-OneWire oneWire(3);
-
 // send all xx seconds
-#define MSG_INTERVAL 180
+#define MSG_INTERVAL 120
+
+// restince both of ntc and known resistor
+#define NTC_T0_RESISTENCE 10000
+// b of ntc (see datasheet)
+#define NTC_B 3435
+
+// pin to measure first ntc
+#define SENSOR0_SENSE_PIN 14
+// pin to power first ntc (or 0 if connected to vcc)
+#define SENSOR0_ACTIVATOR_PIN 6
+
+// pin to measure second ntc
+#define SENSOR1_SENSE_PIN 15
+// pin to power second ntc (or 0 if connected to vcc)
+#define SENSOR1_ACTIVATOR_PIN 5
 
 // all library classes are placed in the namespace 'as'
 using namespace as;
@@ -37,8 +47,8 @@ enum tParams {INACTIVE, T1, T2, T1sT2, T2sT1};
 
 // define all device properties
 const struct DeviceInfo PROGMEM devinfo = {
-  {0x00, 0xa8, 0x01},          // Device ID
-  "JPOT200001",               // Device Serial
+  {0x00, 0xa8, 0x02},          // Device ID
+  "JPOT200002",               // Device Serial
   {0x00, 0xa8},              // Device Model
   0x10,                       // Firmware Version
   as::DeviceType::THSensor,   // Device Type
@@ -84,7 +94,7 @@ class UList0 : public RegList0<Reg0> {
 class MeasureEventMsg : public Message {
   public:
     void init(uint8_t msgcnt, int tempValues[4], bool batlow) {
-      Message::init(0x1a, msgcnt, 0x53, BCAST || RPTEN, batlow ? 0x80 : 0x00, 0x41);
+      Message::init(0x1a, msgcnt, 0x53, (msgcnt % 20 == 1) ? BIDI : BCAST, batlow ? 0x80 : 0x00, 0x41);
       for (int i = 0; i < 4; i++) {
         pload[i * 3] = (tempValues[i] >> 8) & 0xff;
         pload[(i * 3) + 1] = (tempValues[i]) & 0xff;
@@ -115,31 +125,32 @@ class UType : public MultiChannelDevice<Hal, WeatherChannel, 5, UList0> {
 
     class SensorArray : public Alarm {
         UType& dev;
+        Ntc<SENSOR0_SENSE_PIN,NTC_T0_RESISTENCE,NTC_B,SENSOR0_ACTIVATOR_PIN> sensor0;
+        Ntc<SENSOR1_SENSE_PIN,NTC_T0_RESISTENCE,NTC_B,SENSOR1_ACTIVATOR_PIN> sensor1;
 
       public:
-        uint8_t       sensorcount;
-        Ds18b20       sensors[2];
-
         int tempValues[4] = {0, 0, 0, 0};
-        SensorArray (UType& d) : Alarm(0), dev(d) {}
+        SensorArray (UType& d) : Alarm(0), dev(d) { }
 
         virtual void trigger (__attribute__ ((unused)) AlarmClock& clock) {
           tick = delay();
           sysclock.add(*this);
 
-          if (sensorcount > 0) {
-            Ds18b20::measure(sensors, sensorcount);
-            tempValues[0] = sensors[0].temperature();
-            tempValues[1] = sensors[1].temperature();
+          sensor0.measure();
+          sensor1.measure();
 
-            tempValues[2] = tempValues[0] - tempValues[1];
-            tempValues[3] = tempValues[1] - tempValues[0];
+          tempValues[0] = sensor0.temperature();
+          tempValues[1] = sensor1.temperature();
 
-            MeasureEventMsg& msg = (MeasureEventMsg&)dev.message();
+          tempValues[2] = tempValues[0] - tempValues[1];
+          tempValues[3] = tempValues[1] - tempValues[0];
 
-            msg.init(dev.nextcount(), tempValues, dev.battery().low());
-            dev.send(msg, dev.getMasterID());
-          }
+          DPRINT("T:");DDEC(tempValues[0]);DPRINT(";");DDEC(tempValues[1]);DPRINT(";");DDEC(tempValues[2]);DPRINT(";");DDECLN(tempValues[3]);
+
+          MeasureEventMsg& msg = (MeasureEventMsg&)dev.message();
+
+          msg.init(dev.nextcount(), tempValues, dev.battery().low());
+          dev.send(msg, dev.getMasterID());
         }
 
         uint32_t delay () {
@@ -164,8 +175,6 @@ class UType : public MultiChannelDevice<Hal, WeatherChannel, 5, UList0> {
 
     bool init (Hal& hal) {
       TSDevice::init(hal);
-      sensarray.sensorcount = Ds18b20::init(oneWire, sensarray.sensors, 2);
-      DPRINT("Found "); DDEC(sensarray.sensorcount); DPRINTLN(" DS18B20 Sensors");
       sensarray.set(seconds2ticks(5));
       sysclock.add(sensarray);
     }
