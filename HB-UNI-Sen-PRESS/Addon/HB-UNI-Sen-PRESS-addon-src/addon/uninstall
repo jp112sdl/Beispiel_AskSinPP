@@ -1,0 +1,62 @@
+#!/bin/sh
+# WebUI icon used from http://icons8.com 
+
+mount -o remount,rw /
+
+DEVICE="HB-UNI-Sen-PRESS"
+DEVICE_IMG=hb-uni-sen-press.png
+DEVICE_THUMB=hb-uni-sen-press_thumb.png
+FIRMWARE_FILE=/firmware/rftypes/hb_unisen_press.xml
+
+devdescrFile="/www/config/devdescr/DEVDB.tcl"
+devdescrSearch="$DEVICE {{50 \/config\/img\/devices\/50\/$DEVICE_THUMB} {250 \/config\/img\/devices\/250\/$DEVICE_IMG}} "
+
+if [ "`cat $devdescrFile | grep \"$DEVICE\"`" ]; then
+        sed -i "s/\($devdescrSearch\)//g" $devdescrFile
+fi
+
+webuiFile="/www/webui/webui.js"
+if [ "`cat $webuiFile | grep \"$DEVICE\"`" ]; then
+        sed -i "/\($DEVICE\)/d" $webuiFile
+fi
+
+rm -f $FIRMWARE_FILE
+rm -f /www/config/img/devices/250/$DEVICE_IMG
+rm -f /www/config/img/devices/50/$DEVICE_THUMB
+
+DEVICE="HB-UNI-Sen-PRESS-SC"
+DEVICE_IMG=hb-uni-sen-press.png
+DEVICE_THUMB=hb-uni-sen-press_thumb.png
+FIRMWARE_FILE=/firmware/rftypes/hb_unisen_press-sc.xml
+
+devdescrFile="/www/config/devdescr/DEVDB.tcl"
+devdescrSearch="$DEVICE {{50 \/config\/img\/devices\/50\/$DEVICE_THUMB} {250 \/config\/img\/devices\/250\/$DEVICE_IMG}} "
+
+if [ "`cat $devdescrFile | grep \"$DEVICE\"`" ]; then
+        sed -i "s/\($devdescrSearch\)//g" $devdescrFile
+fi
+
+webuiFile="/www/webui/webui.js"
+if [ "`cat $webuiFile | grep \"$DEVICE\"`" ]; then
+        sed -i "/\($DEVICE\)/d" $webuiFile
+fi
+
+stringtable_deFile="/www/config/stringtable_de.txt"
+stringtable_deSearch="UNI_PRESSURE"
+if [ "`cat $stringtable_deFile | grep \"$stringtable_deSearch\"`" ]; then
+	sed -i "/\($stringtable_deSearch\)/d" $stringtable_deFile
+fi
+
+translate_deFile="/www/webui/js/lang/de/translate.lang.stringtable.js"
+translate_deSearch="stringTableUniPressure"
+if [ "`cat $translate_deFile | grep \"$translate_deSearch\"`" ]; then
+	sed -i "/\(${translate_deSearch}\)/d" $translate_deFile
+fi
+
+
+rm -f $FIRMWARE_FILE
+rm -f /www/config/img/devices/250/$DEVICE_IMG
+rm -f /www/config/img/devices/50/$DEVICE_THUMB
+
+sync
+mount -o remount,ro /
