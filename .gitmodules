@@ -1,0 +1,4 @@
+[submodule "examples/HB-UNI-Sen-CAP-MOIST"]
+	path = examples/HB-UNI-Sen-CAP-MOIST
+	url = https://jp112sdl@github.com/jp112sdl/HB-UNI-Sen-CAP-MOIST.git
+	branch = master
