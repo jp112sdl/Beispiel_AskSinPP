@@ -2,3 +2,18 @@
 	path = examples/HB-UNI-Sen-CAP-MOIST
 	url = https://jp112sdl@github.com/jp112sdl/HB-UNI-Sen-CAP-MOIST.git
 	branch = master
+[submodule "examples/HB-UNI-Sen-PRESS"]
+	path = examples/HB-UNI-Sen-PRESS
+	url = https://jp112sdl@github.com/jp112sdl/HB-UNI-Sen-PRESS.git
+[submodule "examples/HB-UNI-Sen-TEMP-DS18B20"]
+	path = examples/HB-UNI-Sen-TEMP-DS18B20
+	url = https://jp112sdl@github.com/jp112sdl/HB-UNI-Sen-TEMP-DS18B20.git
+[submodule "examples/HB-UNI-SenAct-4-4"]
+	path = examples/HB-UNI-SenAct-4-4
+	url = https://jp112sdl@github.com/jp112sdl/HB-UNI-SenAct-4-4.git
+[submodule "examples/HB-UNI-Sen-WEA"]
+	path = examples/HB-UNI-Sen-WEA
+	url = https://jp112sdl@github.com/jp112sdl/HB-UNI-Sen-WEA.git
+[submodule "examples/HM-LC-Bl1-FM-2"]
+	path = examples/HM-LC-Bl1-FM-2
+	url = https://jp112sdl@github.com/jp112sdl/HM-LC-Bl1-FM-2.git
