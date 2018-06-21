@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<device version="2" rx_modes="CONFIG,WAKEUP,LAZY_CONFIG" cyclic_timeout="88200">
+  <supported_types>
+    <type name="HB-UNI-Sen-CAP-MOIST" id="HB-UNI-Sen-CAP-MOIST" updatable="true">
+      <parameter index="9.0" size="1.0" cond_op="GE" const_value="10" />
+      <parameter index="10.0" size="2.0" const_value="0xF311" />
+    </type>
+  </supported_types>
+  <paramset type="MASTER" id="hm_uni_sen_dev_master">
+    <parameter id="BURST_RX">
+      <logical type="boolean" default="false" />
+      <physical type="integer" interface="config" list="0" index="1" size="1.0" />
+    </parameter>
+    <parameter id="LOW_BAT_LIMIT">
+      <logical type="float" min="1.9" max="6" default="2.2" unit="V" />
+      <physical type="integer" interface="config" list="0" index="18" size="1" />
+      <conversion type="float_integer_scale" factor="10" />
+    </parameter>
+    <parameter id="Sendeintervall">                       
+      <logical type="integer" min="1" max="1440" unit="Minuten" default="60" />
+      <physical type="integer" interface="config" list="0" index="33.0" size="2" />
+    </parameter>
+  </paramset>
+  <channels>
+    <channel index="0" type="MAINTENANCE" ui_flags="internal" class="maintenance" count="1">
+      <paramset type="MASTER" id="maint_ch_master"></paramset>
+      <paramset type="VALUES" id="maint_ch_values">
+        <parameter id="UNREACH" operations="read,event" ui_flags="service">
+          <logical type="boolean" />
+          <physical type="integer" interface="internal" value_id="UNREACH" />
+        </parameter>
+        <parameter id="STICKY_UNREACH" operations="read,write,event" ui_flags="service,sticky">
+          <logical type="boolean" />
+          <physical type="integer" interface="internal" value_id="STICKY_UNREACH" />
+        </parameter>
+        <parameter id="CONFIG_PENDING" operations="read,event" ui_flags="service">
+          <logical type="boolean" />
+          <physical type="integer" interface="internal" value_id="CONFIG_PENDING" />
+        </parameter>
+        <parameter id="LOWBAT" operations="read,event" ui_flags="service">
+          <logical type="boolean" />
+          <physical type="integer" interface="internal" value_id="LOWBAT" />
+        </parameter>
+        <parameter id="RSSI_DEVICE" operations="read,event">
+          <logical type="integer" />
+          <physical type="integer" interface="internal" value_id="RSSI_DEVICE" />
+        </parameter>
+        <parameter id="RSSI_PEER" operations="read,event">
+          <logical type="integer" />
+          <physical type="integer" interface="internal" value_id="RSSI_PEER" />
+        </parameter>
+        <parameter id="DEVICE_IN_BOOTLOADER" operations="read,event" ui_flags="service">
+          <logical type="boolean" />
+          <physical type="integer" interface="internal" value_id="DEVICE_IN_BOOTLOADER" />
+        </parameter>
+        <parameter id="UPDATE_PENDING" operations="read,event" ui_flags="service">
+          <logical type="boolean" />
+          <physical type="integer" interface="internal" value_id="UPDATE_PENDING" />
+        </parameter>                                           
+      </paramset>
+    </channel>
+    <channel autoregister="true" index="1" type="WEATHER" count_from_sysinfo="23.0:0.3">
+         <link_roles>
+            <source name="WEATHER_TH" />
+         </link_roles>
+         <paramset type="MASTER" id="hb_cap_moist_master">
+          <parameter id="HIGH Value (Trocken [0 Prozent])">
+              <logical type="integer" min="0" max="1023" unit="" default="830" />              
+              <physical type="integer" interface="config" list="1" index="35.0" size="2" />
+            </parameter>                                                            
+            <parameter id="LOW Value (Nass [100 Prozent])">
+              <logical type="integer" min="0" max="1023" unit="" default="420" /> 
+              <physical type="integer" interface="config" list="1" index="37.0" size="2" />
+            </parameter>         
+         </paramset>
+         <paramset type="VALUES" id="hb_cap_moist_values">
+            <parameter id="HUMIDITY" operations="read,event">
+               <logical type="integer" min="0" max="100" unit="%" />
+               <physical type="integer" interface="command" value_id="HUMIDITY">
+                  <event frame="WEATHER_EVENT" />
+               </physical>
+               <description>
+                  <field id="AutoconfRoles" value="WEATHER" />
+               </description>
+            </parameter>
+            <parameter id="VOLTAGE" operations="read,event" control="BATTERIE">
+             <logical type="float" min="0.0" max="25.5" unit="V"/>
+             <physical type="integer" interface="command" value_id="VOLTAGE">
+              <event frame="WEATHER_EVENT"/>
+             </physical>
+             <conversion type="float_integer_scale" factor="10"/>
+            </parameter>
+         </paramset>
+         <paramset type="LINK" id="hb_cap_moist_link" />
+      </channel>
+
+   </channels>
+   <frames>
+      <frame id="WEATHER_EVENT" direction="from_device" event="true" channel_field="12" type="0x70">
+         <parameter type="integer" index="11.0" size="1.0" param="HUMIDITY" />
+         <parameter type="integer" index="13.0" size="1.0" param="VOLTAGE"/>
+      </frame>  
+   </frames>
+  <paramset_defs />
+</device>
