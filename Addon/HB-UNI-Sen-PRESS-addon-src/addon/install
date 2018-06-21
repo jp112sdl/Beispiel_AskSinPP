@@ -1,0 +1,121 @@
+#!/bin/sh
+# WebUI icon used from http://icons8.com 
+
+mount -o remount,rw /
+
+ADDON_NAME=hbunisenpress
+DEVICE="HB-UNI-Sen-PRESS"
+DEVICE_IMG=hb-uni-sen-press.png
+DEVICE_THUMB=hb-uni-sen-press_thumb.png
+DEVICE_DESC="universeller 1..x Drucksensor"
+
+##########################################
+### New DEVICE HB-UNI-Sen-PRESS        ###
+##########################################
+
+### Copy new devices Files ###
+cp -a firmware/rftypes/* /firmware/rftypes/
+
+### Copy new images ###
+cp -ar www/config/img/devices /www/config/img/
+
+chown root:root /www/config/img/devices/250/$DEVICE_IMG
+chmod 755 /www/config/img/devices/250/$DEVICE_IMG
+chown root:root /www/config/img/devices/50/$DEVICE_THUMB
+chmod 755 /www/config/img/devices/50/$DEVICE_THUMB
+
+### Edit DEVDB.tcl ###
+devdescrFile="/www/config/devdescr/DEVDB.tcl"
+devdescrSearch="array[[:space:]]*set[[:space:]]*DEV_PATHS[[:space:]]*{"
+
+devdescrInsert="$DEVICE {{50 \/config\/img\/devices\/50\/$DEVICE_THUMB} {250 \/config\/img\/devices\/250\/$DEVICE_IMG}} "
+
+if [ -z "`cat $devdescrFile | grep \"$DEVICE\"`" ]; then
+	sed -i "s/\($devdescrSearch\)/\1$devdescrInsert/g" $devdescrFile
+fi
+
+### Edit webui.js ###
+webuiFile="/www/webui/webui.js"
+webuiSearch="DEV_HIGHLIGHT[[:space:]]*=[[:space:]]*new Array();"
+
+webuiInsert="\n"
+webuiInsert="${webuiInsert}DEV_HIGHLIGHT['$DEVICE'] = new Object();\n"
+webuiInsert="${webuiInsert}DEV_LIST.push('$DEVICE');\n"
+webuiInsert="${webuiInsert}DEV_DESCRIPTION['$DEVICE']='${DEVICE_DESC}';\n"
+webuiInsert="${webuiInsert}DEV_PATHS['$DEVICE'] = new Object();\n"
+webuiInsert="${webuiInsert}DEV_PATHS['$DEVICE']['50'] = '\/config\/img\/devices\/50\/$DEVICE_THUMB';\n"
+webuiInsert="${webuiInsert}DEV_PATHS['$DEVICE']['250'] = '\/config\/img\/devices\/250\/$DEVICE_IMG';"
+
+if [ -z "`cat $webuiFile | grep \"$DEVICE\"`" ]; then
+	sed -i "s/\($webuiSearch\)/\1$webuiInsert/g" $webuiFile
+fi
+
+ADDON_NAME=hbunisenpress
+DEVICE="HB-UNI-Sen-PRESS-SC"
+DEVICE_IMG=hb-uni-sen-press.png
+DEVICE_THUMB=hb-uni-sen-press_thumb.png
+DEVICE_DESC="universeller Drucksensor mit Trigger- \/ Schaltausgang"
+
+##########################################
+### New DEVICE HB-UNI-Sen-PRESS-SC     ###
+##########################################
+
+### Copy new devices Files ###
+cp -a firmware/rftypes/* /firmware/rftypes/
+
+### Copy new images ###
+cp -ar www/config/img/devices /www/config/img/
+
+chown root:root /www/config/img/devices/250/$DEVICE_IMG
+chmod 755 /www/config/img/devices/250/$DEVICE_IMG
+chown root:root /www/config/img/devices/50/$DEVICE_THUMB
+chmod 755 /www/config/img/devices/50/$DEVICE_THUMB
+
+### Edit DEVDB.tcl ###
+devdescrFile="/www/config/devdescr/DEVDB.tcl"
+devdescrSearch="array[[:space:]]*set[[:space:]]*DEV_PATHS[[:space:]]*{"
+
+devdescrInsert="$DEVICE {{50 \/config\/img\/devices\/50\/$DEVICE_THUMB} {250 \/config\/img\/devices\/250\/$DEVICE_IMG}} "
+
+if [ -z "`cat $devdescrFile | grep \"$DEVICE\"`" ]; then
+	sed -i "s/\($devdescrSearch\)/\1$devdescrInsert/g" $devdescrFile
+fi
+
+### Edit webui.js ###
+webuiFile="/www/webui/webui.js"
+webuiSearch="DEV_HIGHLIGHT[[:space:]]*=[[:space:]]*new Array();"
+
+webuiInsert="\n"
+webuiInsert="${webuiInsert}DEV_HIGHLIGHT['$DEVICE'] = new Object();\n"
+webuiInsert="${webuiInsert}DEV_LIST.push('$DEVICE');\n"
+webuiInsert="${webuiInsert}DEV_DESCRIPTION['$DEVICE']='${DEVICE_DESC}';\n"
+webuiInsert="${webuiInsert}DEV_PATHS['$DEVICE'] = new Object();\n"
+webuiInsert="${webuiInsert}DEV_PATHS['$DEVICE']['50'] = '\/config\/img\/devices\/50\/$DEVICE_THUMB';\n"
+webuiInsert="${webuiInsert}DEV_PATHS['$DEVICE']['250'] = '\/config\/img\/devices\/250\/$DEVICE_IMG';"
+
+if [ -z "`cat $webuiFile | grep \"$DEVICE\"`" ]; then
+	sed -i "s/\($webuiSearch\)/\1$webuiInsert/g" $webuiFile
+fi
+
+### Edit stringtable_de.txt ###
+stringtable_deFile="/www/config/stringtable_de.txt"
+stringtable_deInsert="UNI_PRESSURE	\${stringTableUniPressure} \n"
+if [ -z "`cat $stringtable_deFile | grep \"UNI_PRESSURE"`" ]; then
+    sed -i "1s/^/\1$stringtable_deInsert/" $stringtable_deFile
+fi
+
+### Edit translate.lang.stringtable.js ###
+translate_deFile="/www/webui/js/lang/de/translate.lang.stringtable.js"
+translate_deSearch="\"dummy\" : \"\","
+translate_deInsert="\n    \"stringTableUniPressure\" : \"Druck\","
+if [ -z "`cat $translate_deFile | grep \"stringTableUniPressure\"`" ]; then
+	sed -i "s/\($translate_deSearch\)/\1$translate_deInsert/g" $translate_deFile
+fi
+
+sync
+
+mount -o remount,ro /
+
+/etc/init.d/S61rfd restart
+
+touch /usr/local/addons/$ADDON_NAME/installed

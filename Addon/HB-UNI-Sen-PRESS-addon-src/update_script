@@ -1,0 +1,54 @@
+#!/bin/sh
+# WebUI icon used from http://icons8.com 
+
+ADDON_NAME=hbunisenpress
+RC_DIR=/usr/local/etc/config/rc.d
+WWW_DIR=/usr/local/etc/config/addons/www/$ADDON_NAME
+ADDON_DIR=/usr/local/addons/$ADDON_NAME
+
+if [ "$1" = "" ]; then
+  echo "CCU1"
+  lcdtool "installing $ADDON_NAME "
+  mount -t yaffs /dev/mtdblock3 /usr/local
+elif [ "$1" = "CCU2" ]; then
+  echo "CCU2"
+  mount -t ubifs ubi1:user /usr/local
+elif [ "$1" = "HM-RASPBERRYMATIC" ]; then
+  echo "HM-RASPBERRYMATIC"
+  mount /usr/local
+fi
+
+# Startscript anlegen
+cp -af rc.d/$ADDON_NAME ${RC_DIR}/
+chmod +x ${RC_DIR}/$ADDON_NAME
+
+# Addon-Verzeichnis anlegen
+mkdir -p ${ADDON_DIR}
+cp -af addon/* ${ADDON_DIR}
+chmod 755 ${ADDON_DIR}
+
+# Symbolic Links
+rm -rf ${WWW_DIR}
+ln -sf ${ADDON_DIR} ${WWW_DIR}
+
+rm ${ADDON_DIR}/installed
+
+# Startskript ausführen
+${RC_DIR}/$ADDON_NAME start
+
+# sync filesystem to make sure all changes are written to disk
+sync
+
+if [ "$1" = "" ]; then
+  echo "CCU1"
+  lcdtool "Reboot...             "
+  lcdtool -a 0x40 -t bin 00
+  echo "x" > /dev/watchdog
+  reboot
+  while true ; do true ;  done
+elif [ "$1" = "CCU2" ]; then
+  echo "CCU2"
+elif [ "$1" = "HM-RASPBERRYMATIC" ]; then
+  echo "HM-RASPBERRYMATIC"
+fi
+

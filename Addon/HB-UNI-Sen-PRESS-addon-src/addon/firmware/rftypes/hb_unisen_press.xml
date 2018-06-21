@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<device version="2" rx_modes="CONFIG,WAKEUP,LAZY_CONFIG" cyclic_timeout="3000">
+  <supported_types>
+    <type name="HB-UNI-Sen-PRESS" id="HB-UNI-Sen-PRESS" updatable="true">
+      <parameter index="9.0" size="1.0" cond_op="GE" const_value="10" />
+      <parameter index="10.0" size="2.0" const_value="0xE901" />
+    </type>
+  </supported_types>
+  <paramset type="MASTER" id="hm_uni_sen_dev_master">
+    <parameter id="BURST_RX">
+      <logical type="boolean" default="false" />
+      <physical type="integer" interface="config" list="0" index="1" size="1.0" />
+    </parameter>
+    <parameter id="Sendeintervall">                       
+      <logical type="integer" min="20" max="600" unit="Sekunden" default="60" />
+      <physical type="integer" interface="config" list="0" index="33.0" size="2" />
+    </parameter>
+  </paramset>
+  <channels>
+    <channel index="0" type="MAINTENANCE" ui_flags="internal" class="maintenance" count="1">
+      <paramset type="MASTER" id="maint_ch_master"></paramset>
+      <paramset type="VALUES" id="maint_ch_values">
+        <parameter id="UNREACH" operations="read,event" ui_flags="service">
+          <logical type="boolean" />
+          <physical type="integer" interface="internal" value_id="UNREACH" />
+        </parameter>
+        <parameter id="STICKY_UNREACH" operations="read,write,event" ui_flags="service,sticky">
+          <logical type="boolean" />
+          <physical type="integer" interface="internal" value_id="STICKY_UNREACH" />
+        </parameter>
+        <parameter id="CONFIG_PENDING" operations="read,event" ui_flags="service">
+          <logical type="boolean" />
+          <physical type="integer" interface="internal" value_id="CONFIG_PENDING" />
+        </parameter>
+        <parameter id="LOWBAT" operations="read,event" ui_flags="service">
+          <logical type="boolean" />
+          <physical type="integer" interface="internal" value_id="LOWBAT" />
+        </parameter>
+        <parameter id="RSSI_DEVICE" operations="read,event">
+          <logical type="integer" />
+          <physical type="integer" interface="internal" value_id="RSSI_DEVICE" />
+        </parameter>
+        <parameter id="RSSI_PEER" operations="read,event">
+          <logical type="integer" />
+          <physical type="integer" interface="internal" value_id="RSSI_PEER" />
+        </parameter>
+        <parameter id="DEVICE_IN_BOOTLOADER" operations="read,event" ui_flags="service">
+          <logical type="boolean" />
+          <physical type="integer" interface="internal" value_id="DEVICE_IN_BOOTLOADER" />
+        </parameter>
+        <parameter id="UPDATE_PENDING" operations="read,event" ui_flags="service">
+          <logical type="boolean" />
+          <physical type="integer" interface="internal" value_id="UPDATE_PENDING" />
+        </parameter>                                           
+      </paramset>
+    </channel>
+    <channel autoregister="true" index="1" type="GENERIC" count_from_sysinfo="23.0:0.3">
+        <paramset type="MASTER" id="hb_press_master">
+         <parameter id="Sensortyp">
+           <logical type="option">
+            <option id="1.2MPa" default="true""/>
+            <option id="0.5MPa"/>
+           </logical>
+           <physical type="integer" interface="config" list="1" index="39.0" size="1"/>
+         </parameter>      
+       </paramset>
+       <paramset type="VALUES" id="hb_press_values">
+          <parameter id="UNI_PRESSURE" operations="read,event">
+             <logical type="float" min="0.0" max="100000.0" unit="bar" />
+             <physical type="integer" interface="command" value_id="UNI_PRESSURE">
+             <event frame="PRESSURE_EVENT"/>
+             </physical>
+             <conversion type="float_integer_scale" factor="100"/>
+          </parameter>
+       </paramset>
+       <paramset type="LINK" id="hb_press_link" />
+      </channel>
+   </channels>
+   <frames>
+      <frame id="PRESSURE_EVENT" direction="from_device" event="true" channel_field="11" type="0x53">
+         <parameter type="integer" index="12.0" size="2.0" param="UNI_PRESSURE" />
+      </frame>  
+   </frames>
+  <paramset_defs />
+</device>
