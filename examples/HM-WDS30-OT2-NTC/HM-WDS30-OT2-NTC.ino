@@ -25,10 +25,15 @@
 // send all xx seconds
 #define MSG_INTERVAL 120
 
-// restince both of ntc and known resistor
-#define NTC_T0_RESISTENCE 10000
-// b of ntc (see datasheet)
+// temperature where ntc has resistor value of R0
+#define NTC_T0 25
+// resistance both of ntc and known resistor
+#define NTC_R0 10000
+// b value of ntc (see datasheet)
 #define NTC_B 3435
+
+// number of additional bits by oversampling (should be between 0 and 6, highly increases number of measurements)
+#define NTC_OVERSAMPLING 2
 
 // pin to measure first ntc
 #define SENSOR0_SENSE_PIN 14
@@ -125,8 +130,8 @@ class UType : public MultiChannelDevice<Hal, WeatherChannel, 5, UList0> {
 
     class SensorArray : public Alarm {
         UType& dev;
-        Ntc<SENSOR0_SENSE_PIN,NTC_T0_RESISTENCE,NTC_B,SENSOR0_ACTIVATOR_PIN> sensor0;
-        Ntc<SENSOR1_SENSE_PIN,NTC_T0_RESISTENCE,NTC_B,SENSOR1_ACTIVATOR_PIN> sensor1;
+        Ntc<SENSOR0_SENSE_PIN,NTC_R0,NTC_B,SENSOR0_ACTIVATOR_PIN,NTC_T0,NTC_OVERSAMPLING> sensor0;
+        Ntc<SENSOR1_SENSE_PIN,NTC_R0,NTC_B,SENSOR1_ACTIVATOR_PIN,NTC_T0,NTC_OVERSAMPLING> sensor1;
 
       public:
         int tempValues[4] = {0, 0, 0, 0};

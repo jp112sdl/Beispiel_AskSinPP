@@ -25,10 +25,15 @@
 // send all xx seconds
 #define MSG_INTERVAL 180
 
-// restince both of ntc and known resistor
-#define NTC_T0_RESISTENCE 10000
-// b of ntc (see datasheet)
+// temperature where ntc has resistor value of R0
+#define NTC_T0 25
+// resistance both of ntc and known resistor
+#define NTC_R0 10000
+// b value of ntc (see datasheet)
 #define NTC_B 3435
+
+// number of additional bits by oversampling (should be between 0 and 6, highly increases number of measurements)
+#define NTC_OVERSAMPLING 2
 
 // pin to measure ntc
 #define NTC_SENSE_PIN 14
@@ -86,7 +91,7 @@ class WeatherChannel : public Channel<Hal, List1, EmptyList, List4, PEERS_PER_CH
 
     WeatherEventMsg msg;
 
-    Ntc<NTC_SENSE_PIN,NTC_T0_RESISTENCE,NTC_B,NTC_ACTIVATOR_PIN> ntc;
+    Ntc<NTC_SENSE_PIN,NTC_R0,NTC_B,NTC_ACTIVATOR_PIN,NTC_T0,NTC_OVERSAMPLING> ntc;
 
   public:
     WeatherChannel () : Channel(), Alarm(5) {}
