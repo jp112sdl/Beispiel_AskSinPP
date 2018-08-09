@@ -305,7 +305,6 @@ class SwitchChannel : public Channel<HalType, SwitchList1, SwitchList3, EmptyLis
     uint8_t lowact;
     uint8_t pinOn;
     uint8_t pinOff;
-    uint16_t holdMillis;
     uint8_t lastmsgcnt;
 
   public:
@@ -334,8 +333,7 @@ class SwitchChannel : public Channel<HalType, SwitchList1, SwitchList3, EmptyLis
         }
     } pushButtonAlarm;
 
-    void init (uint8_t pOn, uint8_t pOff, uint16_t hMillis, bool value = false) {
-      holdMillis = hMillis;
+    void init (uint8_t pOn, uint8_t pOff, bool value = false) {
       pinOn = pOn;
       pinOff = pOff;
       pinMode(pinOn, OUTPUT);
@@ -363,14 +361,20 @@ class SwitchChannel : public Channel<HalType, SwitchList1, SwitchList3, EmptyLis
 
     virtual void switchState(__attribute__((unused)) uint8_t oldstate, uint8_t newstate) {
       if ( newstate == AS_CM_JT_ON ) {
-        pushButtonAlarm.press(pinOn, holdMillis);
-        //digitalWrite(pinOn, lowact ? LOW : HIGH);
-        //digitalWrite(pinOff, lowact ? HIGH : LOW);
+#ifdef USE_PIN_PULSE
+        pushButtonAlarm.press(pinOn, PIN_HOLD_MILLIS);
+#else
+        digitalWrite(pinOn, lowact ? LOW : HIGH);
+        digitalWrite(pinOff, lowact ? HIGH : LOW);
+#endif
       }
       else if ( newstate == AS_CM_JT_OFF ) {
-        pushButtonAlarm.press(pinOff, holdMillis);
-        //digitalWrite(pinOn, lowact ? HIGH : LOW);
-        //digitalWrite(pinOff, lowact ? LOW : HIGH);
+#ifdef USE_PIN_PULSE
+        pushButtonAlarm.press(pinOff, PIN_HOLD_MILLIS);
+#else
+        digitalWrite(pinOn, lowact ? HIGH : LOW);
+        digitalWrite(pinOff, lowact ? LOW : HIGH);
+#endif
       }
       BaseChannel::changed(true);
     }

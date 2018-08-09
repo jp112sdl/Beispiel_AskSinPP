@@ -21,6 +21,9 @@
 #include <AskSinPP.h>
 #include <LowPower.h>
 
+#define USE_PIN_PULSE
+#define PIN_HOLD_MILLIS 100
+
 #include "SwitchObi.h"
 
 // we use a Pro Mini
@@ -33,7 +36,6 @@
 
 #define RELAY_ON_PIN     5
 #define RELAY_OFF_PIN    6
-#define PIN_HOLD_MILLIS 100
 
 
 // number of available peers per channel
