@@ -31,8 +31,9 @@
 // B0 == PIN 8 on Pro Mini
 #define CONFIG_BUTTON_PIN 8
 
-#define RELAY_ON_PIN  5
-#define RELAY_OFF_PIN 6
+#define RELAY_ON_PIN     5
+#define RELAY_OFF_PIN    6
+#define PIN_HOLD_MILLIS 100
 
 
 // number of available peers per channel
@@ -44,8 +45,8 @@ using namespace as;
 
 // define all device properties
 const struct DeviceInfo PROGMEM devinfo = {
-  {0x01, 0xd8, 0x09},     // Device ID
-  "JPLCSw1002",           // Device Serial
+  {0x00, 0xd8, 0x99},     // Device ID
+  "JPLCSw1099",           // Device Serial
   {0x00,0xd8},            // Device Model
   0x25,                   // Firmware Version
   as::DeviceType::Switch, // Device Type
@@ -56,7 +57,7 @@ const struct DeviceInfo PROGMEM devinfo = {
    Configure the used hardware
 */
 typedef AvrSPI<10, 11, 12, 13> RadioSPI;
-typedef AskSin<StatusLed<4>, NoBattery, Radio<RadioSPI, 2> > Hal;
+typedef AskSin<StatusLed<LED_PIN>, NoBattery, Radio<RadioSPI, 2> > Hal;
 
 // setup the device with channel type and number of channels
 typedef MultiChannelDevice<Hal, SwitchChannel<Hal, PEERS_PER_CHANNEL, List0>, 1> SwitchType;
