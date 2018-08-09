@@ -10,19 +10,14 @@
 // number of relays by defining the device
 
 
-#define CFG_LOWACTIVE_BYTE 0x00
-#define CFG_LOWACTIVE_ON   0x01
-#define CFG_LOWACTIVE_OFF  0x00
-
-#define DEVICE_CONFIG CFG_LOWACTIVE_OFF
-
 #define EI_NOTEXTERNAL
 #include <EnableInterrupt.h>
 #include <AskSinPP.h>
 #include <LowPower.h>
 
 #define USE_PIN_PULSE
-#define PIN_HOLD_MILLIS 100
+#define PIN_PULSE_MILLIS 100
+#define PIN_PULSE_STATE  LOW
 
 #include "SwitchObi.h"
 

@@ -1,6 +1,7 @@
 //- -----------------------------------------------------------------------------------------------------------------------
 // AskSin++
-// 2016-10-31 papa Creative Commons - http://creativecommons.org/licenses/by-nc-sa/3.0/de/
+// 2016-10-31 papa     Creative Commons - http://creativecommons.org/licenses/by-nc-sa/3.0/de/
+// 2018-08-09 jp112sdl Creative Commons - http://creativecommons.org/licenses/by-nc-sa/3.0/de/
 //- -----------------------------------------------------------------------------------------------------------------------
 
 #ifndef __SWITCH_H__
@@ -8,6 +9,7 @@
 
 #include "MultiChannelDevice.h"
 #include "Register.h"
+#include <actors/PushButton.h>
 
 namespace as {
 
@@ -306,38 +308,24 @@ class SwitchChannel : public Channel<HalType, SwitchList1, SwitchList3, EmptyLis
     uint8_t pinOn;
     uint8_t pinOff;
     uint8_t lastmsgcnt;
-
+#ifdef USE_PIN_PULSE
+    PushButton<PIN_PULSE_STATE> relON;
+    PushButton<PIN_PULSE_STATE> relOFF;
+#endif
   public:
     SwitchChannel () : BaseChannel(), lowact(false), pinOn(0), pinOff(0), lastmsgcnt(0xff) {}
     virtual ~SwitchChannel() {}
 
-    class PushButton : public Alarm {
-      private:
-        uint8_t pin;
-      public:
-        PushButton () : Alarm(0) {
-          async(true);
-        }
-        virtual ~PushButton () {}
-
-        virtual void trigger (AlarmClock& clock) {
-          digitalWrite(pin, LOW);
-        }
-
-        void press (uint8_t p, uint16_t millis) {
-          pin = p;
-          digitalWrite(pin, HIGH);
-          sysclock.cancel(*this);
-          set(millis2ticks(millis));
-          sysclock.add(*this);
-        }
-    } pushButtonAlarm;
-
     void init (uint8_t pOn, uint8_t pOff, bool value = false) {
       pinOn = pOn;
       pinOff = pOff;
+#ifdef USE_PIN_PULSE
+      relON.init(pinOn);
+      relOFF.init(pinOff);
+#else
       pinMode(pinOn, OUTPUT);
       pinMode(pinOff, OUTPUT);
+#endif
       lowact = value;
       typename BaseChannel::List1 l1 = BaseChannel::getList1();
       status(l1.powerUpAction() == true ? 200 : 0, 0xffff );
@@ -346,8 +334,6 @@ class SwitchChannel : public Channel<HalType, SwitchList1, SwitchList3, EmptyLis
 
     void setup(Device<HalType, List0Type>* dev, uint8_t number, uint16_t addr) {
       BaseChannel::setup(dev, number, addr);
-      sysclock.add(pushButtonAlarm);
-      //pushButtonAlarm.init(6);
     }
 
     uint8_t flags () const {
@@ -362,7 +348,7 @@ class SwitchChannel : public Channel<HalType, SwitchList1, SwitchList3, EmptyLis
     virtual void switchState(__attribute__((unused)) uint8_t oldstate, uint8_t newstate) {
       if ( newstate == AS_CM_JT_ON ) {
 #ifdef USE_PIN_PULSE
-        pushButtonAlarm.press(pinOn, PIN_HOLD_MILLIS);
+        relON.press(PIN_PULSE_MILLIS);
 #else
         digitalWrite(pinOn, lowact ? LOW : HIGH);
         digitalWrite(pinOff, lowact ? HIGH : LOW);
@@ -370,7 +356,7 @@ class SwitchChannel : public Channel<HalType, SwitchList1, SwitchList3, EmptyLis
       }
       else if ( newstate == AS_CM_JT_OFF ) {
 #ifdef USE_PIN_PULSE
-        pushButtonAlarm.press(pinOff, PIN_HOLD_MILLIS);
+        relOFF.press(PIN_PULSE_MILLIS);
 #else
         digitalWrite(pinOn, lowact ? HIGH : LOW);
         digitalWrite(pinOff, lowact ? LOW : HIGH);
