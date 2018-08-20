@@ -29,6 +29,8 @@ _allgemeingültige Verdrahtung (Anschluss CC1101 an Arduino Pro Mini) auch für 
 - **+ an VCC**
 - **- an GND**
 
+**Stromverbrauch: Um den Stromverbrauch zu reduzieren, sind die beiden Bauteile (LDO und LED; rotes X) von der Arduino Pro Mini Platine zu entfernen.**
+
 **_Mithilfe von Kupferlackdraht kann das Funkmodul platzspared "huckepack" am Arduino Pro Mini angeschlossen werden:_**
 ![wiring2](Images/arduino_bottom.jpg)
 
