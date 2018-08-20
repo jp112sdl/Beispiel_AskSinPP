@@ -83,7 +83,7 @@ class UList0 : public RegList0<Reg0> {
 
 class MeasureEventMsg : public Message {
   public:
-    void init(uint8_t msgcnt, int tempValues[4], bool batlow) {
+    void init(uint8_t msgcnt, uint16_t tempValues[4], bool batlow) {
       Message::init(0x1a, msgcnt, 0x53, (msgcnt % 20 == 1) ? BIDI : BCAST, batlow ? 0x80 : 0x00, 0x41);
       for (int i = 0; i < 4; i++) {
         pload[i * 3] = (tempValues[i] >> 8) & 0xff;
@@ -118,9 +118,10 @@ class UType : public MultiChannelDevice<Hal, WeatherChannel, 5, UList0> {
 
       public:
         uint8_t       sensorcount;
-        Ds18b20       sensors[2];
+        Ds18b20       sensors[4];
 
-        int tempValues[4] = {0, 0, 0, 0};
+        // initialized values shown as -150°
+        uint16_t tempValues[4] = {0xD8F1, 0xD8F1, 0xD8F1, 0xD8F1};
         SensorArray (UType& d) : Alarm(0), dev(d) {}
 
         virtual void trigger (__attribute__ ((unused)) AlarmClock& clock) {
@@ -130,10 +131,25 @@ class UType : public MultiChannelDevice<Hal, WeatherChannel, 5, UList0> {
           if (sensorcount > 0) {
             Ds18b20::measure(sensors, sensorcount);
             tempValues[0] = sensors[0].temperature();
-            tempValues[1] = sensors[1].temperature();
 
-            tempValues[2] = tempValues[0] - tempValues[1];
-            tempValues[3] = tempValues[1] - tempValues[0];
+            // 2 sensors are classical 2*temp +difference, - difference
+            if (sensorcount == 2) {
+              tempValues[1] = sensors[1].temperature();
+              tempValues[2] = tempValues[0] - tempValues[1];
+              tempValues[3] = tempValues[1] - tempValues[0];
+            }
+            // 3 sensors are 2*temp +difference, 3rd temp
+            if (sensorcount == 3) {
+              tempValues[1] = sensors[1].temperature();
+              tempValues[2] = tempValues[0] - tempValues[1];
+              tempValues[3] = sensors[2].temperature();
+            }
+            // 4 sensors are 4*temp no difference
+            if (sensorcount == 4) {
+              tempValues[1] = sensors[1].temperature();
+              tempValues[2] = sensors[2].temperature();
+              tempValues[3] = sensors[3].temperature();
+            }
 
             MeasureEventMsg& msg = (MeasureEventMsg&)dev.message();
 
@@ -164,7 +180,8 @@ class UType : public MultiChannelDevice<Hal, WeatherChannel, 5, UList0> {
 
     bool init (Hal& hal) {
       TSDevice::init(hal);
-      sensarray.sensorcount = Ds18b20::init(oneWire, sensarray.sensors, 2);
+      // up to 4 sensors
+      sensarray.sensorcount = Ds18b20::init(oneWire, sensarray.sensors, 4);
       DPRINT("Found "); DDEC(sensarray.sensorcount); DPRINTLN(" DS18B20 Sensors");
       sensarray.set(seconds2ticks(5));
       sysclock.add(sensarray);
