@@ -130,15 +130,16 @@ class UType : public MultiChannelDevice<Hal, WeatherChannel, 5, UList0> {
 
           if (sensorcount > 0) {
             Ds18b20::measure(sensors, sensorcount);
+            // 1 sensors gives 1*temp, no difference
             tempValues[0] = sensors[0].temperature();
 
-            // 2 sensors are classical 2*temp +difference, - difference
+            // 2 sensors are classical 2*temp, +difference(1-2), - difference(2-1)
             if (sensorcount == 2) {
               tempValues[1] = sensors[1].temperature();
               tempValues[2] = tempValues[0] - tempValues[1];
               tempValues[3] = tempValues[1] - tempValues[0];
             }
-            // 3 sensors are 2*temp +difference, 3rd temp
+            // 3 sensors are 2*temp, +difference(1-2), 3rd temp
             if (sensorcount == 3) {
               tempValues[1] = sensors[1].temperature();
               tempValues[2] = tempValues[0] - tempValues[1];
