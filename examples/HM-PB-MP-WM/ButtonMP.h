@@ -3,8 +3,8 @@
 // 2016-10-31 papa Creative Commons - http://creativecommons.org/licenses/by-nc-sa/3.0/de/
 // 2018-08-20 jp112sdl Creative Commons - http://creativecommons.org/licenses/by-nc-sa/3.0/de/
 //- -----------------------------------------------------------------------------------------------------------------------
-#ifndef __BUTTONMP_H__
-#define __BUTTONMP_H__
+#ifndef __BUTTON_H__
+#define __BUTTON_H__
 
 
 #include <Pins.h>
