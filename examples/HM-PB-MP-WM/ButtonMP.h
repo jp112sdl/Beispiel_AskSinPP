@@ -26,7 +26,7 @@ namespace as {
 template <uint8_t OFFSTATE = HIGH, uint8_t ONSTATE = LOW, WiringPinMode MODE = INPUT_PULLUP>
 class StateButton: public Alarm {
 
-#define DEBOUNCETIME millis2ticks(50)
+#define DEBOUNCETIME millis2ticks(30)
 
   public:
     enum States {
