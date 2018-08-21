@@ -21,24 +21,25 @@
 // we use a Pro Mini
 // Arduino pin for the LED
 // D4 == PIN 4 on Pro Mini
-#define LED_PIN 4
+#define LED_PIN  4
 #define LED_PIN2 5
 // Arduino pin for the config button
 // B0 == PIN 8 on Pro Mini
 #define CONFIG_BUTTON_PIN 8
 // Arduino pins for the buttons
 // A0,A1,A2,A3 == PIN 14,15,16,17 on Pro Mini
-#define CHANNELS  8  //number of BTN-Pins * 2
 #define BTN1_PIN 14
 #define BTN2_PIN 15
-#define BTN3_PIN 16
-#define BTN4_PIN 17
+//#define BTN3_PIN 16
+//#define BTN4_PIN 17
 
 
-#if CHANNELS == 4
-#define DEV_MODEL {0x00, 0x36}
-#else
+#ifdef BTN3_PIN && BTN4_PIN
+#define CHANNELS 8
 #define DEV_MODEL {0x00, 0x35}
+#else
+#define CHANNELS 4
+#define DEV_MODEL {0x00, 0x36}
 #endif
 
 // number of available peers per channel
@@ -91,7 +92,7 @@ class RemoteList1 : public RegList1<RemoteReg1> {
     RemoteList1 (uint16_t addr) : RegList1<RemoteReg1>(addr) {}
     void defaults () {
       clear();
-      longPressTime(400);
+      longPressTime(1);
       // aesActive(false);
     }
 };
@@ -123,42 +124,52 @@ class RemoteChannel : public Channel<HALTYPE, RemoteList1, EmptyList, DefList4, 
     }
 
     bool configChanged() {
-      //we have to add 300ms to the value set in CCU!
       uint16_t _longpressTime = 300 + (this->getList1().longPressTime() * 100);
-      //DPRINT("longpressTime = ");DDECLN(_longpressTime);
+      //DHEX(number());DPRINTLN(" longPressTime ");DDECLN(_longpressTime);
       setLongPressTime(millis2ticks(_longpressTime));
     }
 
     virtual void multi(uint8_t count) {
       Button::multi(count);
-      DPRINT(" multi press -> count: "); DDECLN(count);
 
-      uint8_t ch = (count > 1) ? BaseChannel::number() + 1 : BaseChannel::number();
-      bool lp = (count > 2);
+      if ((BaseChannel::number() % 2 == 0)  && (count > 1)) {
+        DPRINT(F(" multi press -> count: ")); DDECLN(count);
+        sendMsg(count > 2);
+      }
 
-      DHEX(ch); DPRINTLN(lp ? " long" : " short");
+      if ((BaseChannel::number() % 2 == 1)  && (count == 1)) {
+        DPRINTLN(F(" single press"));
+        sendMsg(false);
+      }
 
+    }
+
+    void sendMsg(bool lg) {
+      DPRINTLN(""); DPRINTLN("***");
+      DPRINT("SEND MSG CH "); DHEX(BaseChannel::number()); DPRINTLN(lg ? " long" : " short");
+      DPRINTLN("***");
       RemoteEventMsg& msg = (RemoteEventMsg&)this->device().message();
-
-      msg.init(this->device().nextcount(), ch, repeatcnt, lp, this->device().battery().low());
+      msg.init(this->device().nextcount(), BaseChannel::number(), repeatcnt, lg, this->device().battery().low());
       this->device().sendPeerEvent(msg, *this);
       repeatcnt++;
     }
 
     virtual void state(uint8_t s) {
       Button::state(s);
-      if (s != released) {
-        DHEX(BaseChannel::number());
-        RemoteEventMsg& msg = (RemoteEventMsg&)this->device().message();
-        msg.init(this->device().nextcount(), this->number(), repeatcnt, (s == longreleased || s == longpressed), this->device().battery().low());
-        if (s == longreleased) {
-          // send the message to every peer
-          this->device().sendPeerEvent(msg, *this);
-          repeatcnt++;
-        }
-        else if (s == longpressed) {
-          // broadcast the message
-          this->device().broadcastPeerEvent(msg, *this);
+      if (BaseChannel::number() % 2 == 1) {
+        if (s != released) {
+          DHEX(BaseChannel::number());
+          RemoteEventMsg& msg = (RemoteEventMsg&)this->device().message();
+          msg.init(this->device().nextcount(), this->number(), repeatcnt, (s == longreleased || s == longpressed), this->device().battery().low());
+          if ( s == longreleased) {
+            // send the message to every peer
+            this->device().sendPeerEvent(msg, *this);
+            repeatcnt++;
+          }
+          else if (s == longpressed) {
+            // broadcast the message
+            this->device().broadcastPeerEvent(msg, *this);
+          }
         }
       }
     }
@@ -173,26 +184,6 @@ class RemoteChannel : public Channel<HALTYPE, RemoteList1, EmptyList, DefList4, 
     }
 };
 
-#define remoteISR(device,chan,pin) class device##chan##ISRHandler { \
-    public: \
-      static void isr () { device.channel(chan).irq(); } \
-  }; \
-  device.channel(chan).button().init(pin); \
-  if( digitalPinToInterrupt(pin) == NOT_AN_INTERRUPT ) \
-    enableInterrupt(pin,device##chan##ISRHandler::isr,CHANGE); \
-  else \
-    attachInterrupt(digitalPinToInterrupt(pin),device##chan##ISRHandler::isr,CHANGE);
-
-#define remoteChannelISR(chan,pin) class __##pin##ISRHandler { \
-    public: \
-      static void isr () { chan.irq(); } \
-  }; \
-  chan.button().init(pin); \
-  if( digitalPinToInterrupt(pin) == NOT_AN_INTERRUPT ) \
-    enableInterrupt(pin,__##pin##ISRHandler::isr,CHANGE); \
-  else \
-    attachInterrupt(digitalPinToInterrupt(pin),__##pin##ISRHandler::isr,CHANGE);
-
 typedef MultiChannelDevice<Hal, RemoteChannel<Hal, PEERS_PER_CHANNEL, List0>, CHANNELS> RemoteType;
 
 Hal hal;
@@ -202,17 +193,53 @@ ConfigButton<RemoteType> cfgBtn(sdev);
 void setup () {
   DINIT(57600, ASKSIN_PLUS_PLUS_IDENTIFIER);
   sdev.init(hal);
-  remoteISR(sdev, 1, BTN1_PIN);
-  remoteISR(sdev, 3, BTN2_PIN);
+
+  if ( digitalPinToInterrupt(BTN1_PIN) == NOT_AN_INTERRUPT ) enableInterrupt(BTN1_PIN, isrBTN1, CHANGE); else attachInterrupt(digitalPinToInterrupt(BTN1_PIN), isrBTN1, CHANGE);
+  sdev.channel(1).button().init(BTN1_PIN);
+  sdev.channel(2).button().init(BTN1_PIN);
+
+  if ( digitalPinToInterrupt(BTN2_PIN) == NOT_AN_INTERRUPT ) enableInterrupt(BTN2_PIN, isrBTN2, CHANGE); else attachInterrupt(digitalPinToInterrupt(BTN2_PIN), isrBTN2, CHANGE);
+  sdev.channel(3).button().init(BTN2_PIN);
+  sdev.channel(4).button().init(BTN2_PIN);
+
 #ifdef BTN3_PIN
-  remoteISR(sdev, 5, BTN3_PIN);
+  if ( digitalPinToInterrupt(BTN3_PIN) == NOT_AN_INTERRUPT ) enableInterrupt(BTN3_PIN, isrBTN3, CHANGE); else attachInterrupt(digitalPinToInterrupt(BTN3_PIN), isrBTN3, CHANGE);
+  sdev.channel(5).button().init(BTN3_PIN);
+  sdev.channel(6).button().init(BTN3_PIN);
 #endif
+
 #ifdef BTN4_PIN
-  remoteISR(sdev, 7, BTN4_PIN);
+  if ( digitalPinToInterrupt(BTN4_PIN) == NOT_AN_INTERRUPT ) enableInterrupt(BTN4_PIN, isrBTN4, CHANGE); else attachInterrupt(digitalPinToInterrupt(BTN4_PIN), isrBTN4, CHANGE);
+  sdev.channel(7).button().init(BTN4_PIN);
+  sdev.channel(8).button().init(BTN4_PIN);
 #endif
+
   buttonISR(cfgBtn, CONFIG_BUTTON_PIN);
   sdev.initDone();
 }
+
+static void isrBTN1 () {
+  sdev.channel(1).irq();
+  sdev.channel(2).irq();
+}
+static void isrBTN2 () {
+  sdev.channel(3).irq();
+  sdev.channel(4).irq();
+}
+
+#ifdef BTN3_PIN
+static void isrBTN3 () {
+  sdev.channel(5).irq();
+  sdev.channel(6).irq();
+}
+#endif
+
+#ifdef BTN4_PIN
+static void isrBTN4 () {
+  sdev.channel(7).irq();
+  sdev.channel(8).irq();
+}
+#endif
 
 void loop() {
   bool worked = hal.runready();
