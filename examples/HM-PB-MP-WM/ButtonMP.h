@@ -99,8 +99,6 @@ class StateButton: public Alarm {
       uint16_t nexttick = 0;
       switch ( state() ) {
         case released:
-          presscount++;
-          sysclock.cancel(ma);
           ma.set(millis2ticks(MULTIPRESSTIME));
           sysclock.add(ma);
         case longreleased:
@@ -172,6 +170,8 @@ class StateButton: public Alarm {
             break;
 
           case pressed:
+            presscount++;
+            sysclock.cancel(ma);
           case longpressed:
             if (pinstate == OFFSTATE) {
               nextstate = state() == pressed ? released : longreleased;
