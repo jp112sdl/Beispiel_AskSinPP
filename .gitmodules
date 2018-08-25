@@ -26,3 +26,6 @@
 [submodule "examples/HB-UNI-Sen-LEV-US"]
 	path = examples/HB-UNI-Sen-LEV-US
 	url = https://jp112sdl@github.com/jp112sdl/HB-UNI-Sen-LEV-US.git
+[submodule "examples/HB-UNI-Sen-TEMP-IR"]
+	path = examples/HB-UNI-Sen-TEMP-IR
+	url = https://jp112sdl@github.com/jp112sdl/HB-UNI-Sen-TEMP-IR.git
