@@ -57,7 +57,6 @@ z.B.:
     - heruntergeladene AskSinPP Bibliothek ZIP-Datei auswählen
   - Sketch -> Bibliothek einbinden -> Bibliotheken verwalten
     - im Suchfeld folgende Bibliotheken suchen und installieren:
-      - TimerOne
       - EnableInterrupt
       - Low-Power
  - Board einstellen:
