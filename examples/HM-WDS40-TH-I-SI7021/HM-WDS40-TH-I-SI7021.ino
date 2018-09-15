@@ -1,6 +1,7 @@
 //- -----------------------------------------------------------------------------------------------------------------------
 // AskSin++
 // 2016-10-31 papa Creative Commons - http://creativecommons.org/licenses/by-nc-sa/3.0/de/
+// 2018-09-13 jp112sdl Creative Commons - http://creativecommons.org/licenses/by-nc-sa/3.0/de/
 //- -----------------------------------------------------------------------------------------------------------------------
 
 // define this to read the device id, serial and device type from bootloader section
@@ -12,7 +13,7 @@
 #include <LowPower.h>
 
 #include <MultiChannelDevice.h>
-// https://github.com/spease/Sensirion.git
+//https://github.com/jayjayuk/Si7021-Humidity-And-Temperature-Sensor-Library
 #include <sensors/Si7021.h>
 
 // we use a Pro Mini
@@ -34,8 +35,8 @@ using namespace as;
 
 // define all device properties
 const struct DeviceInfo PROGMEM devinfo = {
-  {0x34, 0x56, 0x81},     // Device ID
-  "JPTH10I004",           // Device Serial
+  {0x00, 0x3f, 0x00},     // Device ID
+  "JPTH40I000",           // Device Serial
   {0x00, 0x3f},           // Device Model Indoor
   0x10,                   // Firmware Version
   as::DeviceType::THSensor, // Device Type
