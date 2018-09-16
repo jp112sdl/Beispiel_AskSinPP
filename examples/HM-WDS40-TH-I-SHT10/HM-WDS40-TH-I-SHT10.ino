@@ -28,10 +28,10 @@
 
 //Korrektur von Temperatur und Luftfeuchte
 //Einstellbarer OFFSET für Temperatur -> gemessene Temp +/- Offset = Angezeigte Temp.
-int OFFSETtemp 0; //z.B -50 ≙ -5°C / 50 ≙ +5°C
+#define OFFSETtemp 0 //z.B -50 ≙ -5°C / 50 ≙ +5°C
 
 //Einstellbarer OFFSET für Luftfeuchte -> gemessene Luftf. +/- Offset = Angezeigte Luftf.
-int OFFSEThumi 0; //z.B -10 ≙ -10%RF / 10 ≙ +10%RF
+#define OFFSEThumi 0 //z.B -10 ≙ -10%RF / 10 ≙ +10%RF
 
 //-----------------------------------------------------------------------------------------
 
