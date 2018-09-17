@@ -188,8 +188,8 @@ class DispChannel : public Channel<Hal, RemoteList1, EmptyList, DefList4, PEERS_
     void configChanged() {
       List1Texts[(number() - 1)  * 2] = this->getList1().TEXT1();
       List1Texts[((number() - 1) * 2) + 1] = this->getList1().TEXT2();
-      DDEC(number()); DPRINT(F(" - TEXT1 = ")); DPRINTLN(this->getList1().TEXT1());
-      DDEC(number()); DPRINT(F(" - TEXT2 = ")); DPRINTLN(this->getList1().TEXT2());
+      //DDEC(number()); DPRINT(F(" - TEXT1 = ")); DPRINTLN(this->getList1().TEXT1());
+      //DDEC(number()); DPRINT(F(" - TEXT2 = ")); DPRINTLN(this->getList1().TEXT2());
     }
 
     uint8_t status () const {
@@ -256,13 +256,13 @@ class DispChannel : public Channel<Hal, RemoteList1, EmptyList, DefList4, PEERS_
             }
           }
         }
-        DPRINTLN("");
+        //DPRINTLN("");
         currentLine = 0;
         commandIdx = 0;
         memset(command, 0, sizeof(command));
 
         /*for (int i = 0; i < DISPLAY_LINES; i++) {
-          DPRINT("ROW "); DDEC(i + 1); DPRINT(" COL = "); DDEC(DisplayLine[i].Color); DPRINT(" ICO = "); DDEC(DisplayLine[i].Icon); DPRINT(" TEXT = "); DPRINT(DisplayLine[i].Text); DPRINTLN("");
+          DPRINT("ROW "); DDEC(i + 1); DPRINT(" COLOR = "); DDEC(DisplayLine[i].Color); DPRINT(" ICON = "); DDEC(DisplayLine[i].Icon); DPRINT(" TEXT = "); DPRINT(DisplayLine[i].Text); DPRINTLN("");
           }*/
 
         bDisplayStandbyTimerRunning = false;
