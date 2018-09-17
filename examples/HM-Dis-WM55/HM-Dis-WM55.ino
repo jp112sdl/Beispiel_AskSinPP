@@ -23,8 +23,8 @@
 
 #define CONFIG_BUTTON_PIN 13
 #define LED_PIN            4
-#define BTN1_PIN          14
-#define BTN2_PIN          15
+#define BTN1_PIN          19
+#define BTN2_PIN          21
 
 #define CENTER_TEXT
 #define TEXT_LENGTH       12
@@ -54,8 +54,6 @@ enum HMColors { clWHITE, clRED, clORANGE, clYELLOW, clGREEN, clBLUE };
 // all library classes are placed in the namespace 'as'
 using namespace as;
 
-bool bTurnDisplayOn = false;
-bool bDisplayStandbyTimerRunning = false;
 void enableDisplayLED(bool state) {
   (state == true) ? digitalWrite(TFT_LED, HIGH) :   digitalWrite(TFT_LED, LOW);
 }
@@ -73,11 +71,15 @@ typedef struct {
   uint8_t Color = 0x00;
   uint8_t Icon = 0xff;
   String Text = "";
-} DisplayInfo;
-
-DisplayInfo DisplayLine[DISPLAY_LINES];
+} DisplayLine;
+DisplayLine DisplayLines[DISPLAY_LINES];
 
 String List1Texts[20];
+
+struct {
+  bool TurnOn = false;
+  bool StandbyTimerRunning = false;
+} DisplayState;
 
 /**
    Configure the used hardware
@@ -161,9 +163,9 @@ class RemoteList1 : public RegList1<RemoteReg1> {
 
 void initDisplayLines() {
   for (int i = 0; i < DISPLAY_LINES; i++) {
-    DisplayLine[i].Color = 0x00;
-    DisplayLine[i].Icon = 0xff;
-    DisplayLine[i].Text = "";
+    DisplayLines[i].Color = 0x00;
+    DisplayLines[i].Icon = 0xff;
+    DisplayLines[i].Text = "";
   }
 }
 
@@ -227,7 +229,7 @@ class DispChannel : public Channel<Hal, RemoteList1, EmptyList, DefList4, PEERS_
                 Text += c;
               } else {
                 getText = false;
-                DisplayLine[currentLine].Text = Text;
+                DisplayLines[currentLine].Text = Text;
               }
             }
 
@@ -237,16 +239,16 @@ class DispChannel : public Channel<Hal, RemoteList1, EmptyList, DefList4, PEERS_
               } else {
                 uint8_t textNum = command[i + 1] - 0x80;
                 //DPRINT("USE PRECONF TEXT NUMBER "); DDECLN(textNum);
-                DisplayLine[currentLine].Text =  List1Texts[textNum];
+                DisplayLines[currentLine].Text =  List1Texts[textNum];
               }
             }
 
             if (command[i] == MSG_COLOR_KEY) {
-              DisplayLine[currentLine].Color = command[i + 1] - 0x80;
+              DisplayLines[currentLine].Color = command[i + 1] - 0x80;
             }
 
             if (command[i] == MSG_ICON_KEY) {
-              DisplayLine[currentLine].Icon = command[i + 1] - 0x80;
+              DisplayLines[currentLine].Icon = command[i + 1] - 0x80;
             }
 
             if (command[i] == AS_ACTION_COMMAND_EOL) {
@@ -262,11 +264,10 @@ class DispChannel : public Channel<Hal, RemoteList1, EmptyList, DefList4, PEERS_
         memset(command, 0, sizeof(command));
 
         /*for (int i = 0; i < DISPLAY_LINES; i++) {
-          DPRINT("ROW "); DDEC(i + 1); DPRINT(" COLOR = "); DDEC(DisplayLine[i].Color); DPRINT(" ICON = "); DDEC(DisplayLine[i].Icon); DPRINT(" TEXT = "); DPRINT(DisplayLine[i].Text); DPRINTLN("");
+          DPRINT("LINE "); DDEC(i + 1); DPRINT(" COLOR = "); DDEC(DisplayLines[i].Color); DPRINT(" ICON = "); DDEC(DisplayLines[i].Icon); DPRINT(" TEXT = "); DPRINT(DisplayLines[i].Text); DPRINTLN("");
           }*/
 
-        bDisplayStandbyTimerRunning = false;
-        bTurnDisplayOn = true;
+        DisplayOn();
       }
 
       return true;
@@ -339,15 +340,15 @@ class DisplayDevice : public ChannelDevice<Hal, VirtBaseChannel<Hal, DispList0>,
 
     void stopDisplayStandbyTimer() {
       //DPRINTLN("DISPLAY AUS");
-      bDisplayStandbyTimerRunning = false;
+      DisplayState.StandbyTimerRunning = false;
       enableDisplayLED(false);
-      bTurnDisplayOn = false;
+      DisplayState.TurnOn = false;
       sysclock.cancel(displayStandbyTimer);
     }
 
     void startDisplayStandbyTimer() {
       //DPRINTLN("DISPLAY EIN");
-      bDisplayStandbyTimerRunning = true;
+      DisplayState.StandbyTimerRunning = true;
       enableDisplayLED(true);
       sysclock.cancel(displayStandbyTimer);
       displayStandbyTimer.set(seconds2ticks(this->getList0().STANDBY_TIME()));
@@ -389,9 +390,9 @@ void setup () {
 
 
 void loop() {
-  if (bTurnDisplayOn && !bDisplayStandbyTimerRunning) {
+  if (DisplayState.TurnOn && !DisplayState.StandbyTimerRunning) {
     for (int i = 0; i < DISPLAY_LINES; i++) {
-      drawLine(i + 1, DisplayLine[i].Color, DisplayLine[i].Icon, DisplayLine[i].Text);
+      drawLine(i + 1, DisplayLines[i].Color, DisplayLines[i].Icon, DisplayLines[i].Text);
     }
     initDisplayLines();
     sdev.startDisplayStandbyTimer();
@@ -402,6 +403,11 @@ void loop() {
   if ( worked == false && poll == false ) {
     hal.activity.savePower<Idle<>>(hal);
   }
+}
+
+void DisplayOn() {
+  DisplayState.StandbyTimerRunning = false;
+  DisplayState.TurnOn = true;
 }
 
 void initDisplay() {
