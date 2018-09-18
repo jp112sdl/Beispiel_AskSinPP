@@ -24,6 +24,17 @@
 // B0 == PIN 8 on Pro Mini
 #define CONFIG_BUTTON_PIN 8
 
+//-----------------------------------------------------------------------------------------
+
+//Korrektur von Temperatur und Luftfeuchte
+//Einstellbarer OFFSET für Temperatur -> gemessene Temp +/- Offset = Angezeigte Temp.
+#define OFFSETtemp 0 //z.B -50 ≙ -5°C / 50 ≙ +5°C
+
+//Einstellbarer OFFSET für Luftfeuchte -> gemessene Luftf. +/- Offset = Angezeigte Luftf.
+#define OFFSEThumi 0 //z.B -10 ≙ -10%RF / 10 ≙ +10%RF
+
+//-----------------------------------------------------------------------------------------
+
 // number of available peers per channel
 #define PEERS_PER_CHANNEL 6
 
@@ -100,7 +111,7 @@ class WeatherChannel : public Channel<Hal, List1, EmptyList, List4, PEERS_PER_CH
 
       humidity = 0;
       temp = t * 10.0;
-      DPRINT("T/H = " + String(temp)+"/"+ String(humidity) + "\n");
+      DPRINT("T/H = " + String(temp+OFFSETtemp)+"/"+ String(humidity+OFFSEThumi) + "\n");
     }
     
     virtual void trigger (__attribute__ ((unused)) AlarmClock& clock) {
@@ -110,7 +121,7 @@ class WeatherChannel : public Channel<Hal, List1, EmptyList, List4, PEERS_PER_CH
       clock.add(*this);
       measure();
 
-      msg.init(msgcnt, temp, humidity, device().battery().low());
+      msg.init(msgcnt, temp+OFFSETtemp, humidity+OFFSEThumi, device().battery().low());
       device().sendPeerEvent(msg, *this);
     }
 
@@ -149,5 +160,5 @@ void loop() {
   bool poll = sdev.pollRadio();
   if ( worked == false && poll == false ) {
     hal.activity.savePower<Sleep<>>(hal);
-  }
+  } 
 }
