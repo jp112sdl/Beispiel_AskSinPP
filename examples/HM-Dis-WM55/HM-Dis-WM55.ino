@@ -29,7 +29,7 @@
 #define CENTER_TEXT
 #define TEXT_LENGTH       12
 
-#define INVERT_BACKGROUND
+//#define INVERT_BACKGROUND
 #define DISPLAY_LINES      6
 #define DISPLAY_ROTATE     1 // 0 = 0° , 1 = 90°, 2 = 180°, 3 = 270°
 #define ICON_WIDTH        20
