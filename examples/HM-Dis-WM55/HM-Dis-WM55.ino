@@ -29,19 +29,19 @@
 #define CENTER_TEXT
 #define TEXT_LENGTH       12
 
+#define INVERT_BACKGROUND
 #define DISPLAY_LINES      6
 #define DISPLAY_ROTATE     1 // 0 = 0° , 1 = 90°, 2 = 180°, 3 = 270°
 #define ICON_WIDTH        20
 #define ICON_HEIGHT       20
 
-#define TFT_LED     6
-#define TFT_CS      8
-#define TFT_MOSI    9
-#define TFT_RST    10
-#define TFT_SCK    11
-#define TFT_DC     12
+#define TFT_LED            6
+#define TFT_CS             8
+#define TFT_MOSI           9
+#define TFT_RST           10
+#define TFT_SCK           11
+#define TFT_DC            12
 Adafruit_ST7735 tft = Adafruit_ST7735(TFT_CS,  TFT_DC, TFT_MOSI, TFT_SCK, TFT_RST);
-enum HMColors { clWHITE, clRED, clORANGE, clYELLOW, clGREEN, clBLUE };
 
 // number of available peers per channel
 #define PEERS_PER_CHANNEL 8
@@ -50,6 +50,12 @@ enum HMColors { clWHITE, clRED, clORANGE, clYELLOW, clGREEN, clBLUE };
 #define MSG_COLOR_KEY 0x11
 #define MSG_TEXT_KEY  0x12
 #define MSG_ICON_KEY  0x13
+
+#ifdef INVERT_BACKGROUND
+#define DISPLAY_BGCOLOR ST77XX_WHITE
+#else
+#define DISPLAY_BGCOLOR ST77XX_BLACK
+#endif
 
 // all library classes are placed in the namespace 'as'
 using namespace as;
@@ -384,10 +390,8 @@ void setup () {
   buttonISR(cfgBtn, CONFIG_BUTTON_PIN);
   sdev.initDone();
   sdev.disp1Channel().changed(true);
-
   initDisplay();
 }
-
 
 void loop() {
   if (DisplayState.TurnOn && !DisplayState.StandbyTimerRunning) {
@@ -405,16 +409,26 @@ void loop() {
   }
 }
 
+
+//////////////////////
+// 
+// DISPLAY ROUTINES //
+//
+//////////////////////
+
 void DisplayOn() {
   DisplayState.StandbyTimerRunning = false;
   DisplayState.TurnOn = true;
 }
 
+
+enum HMColors { clWHITE, clRED, clORANGE, clYELLOW, clGREEN, clBLUE };
+
 void initDisplay() {
   tft.initR(INITR_GREENTAB);
   pinMode(TFT_LED, OUTPUT);
   digitalWrite(TFT_LED, HIGH);
-  tft.fillScreen(ST77XX_BLACK);
+  tft.fillScreen(DISPLAY_BGCOLOR);
   tft.setRotation(DISPLAY_ROTATE);
   tft.setFont(&FreeMono9pt7bMod);
   tft.setTextWrap(false);
@@ -432,10 +446,15 @@ void drawLine(uint8_t rowNum, uint8_t colorNum, uint8_t iconNum, String text) {
 
 void clearLine(uint8_t rowNum) {
   int8_t rowOffset = ((rowNum - 1) * (ICON_HEIGHT + 1)) + 1;
-  tft.fillRect(0, rowOffset, tft.width(), ICON_HEIGHT, ST7735_BLACK);
+  tft.fillRect(0, rowOffset, tft.width(), ICON_HEIGHT, DISPLAY_BGCOLOR);
 }
 
-static const uint16_t * icons[12] = {icon0, icon1, icon2, icon3, icon4, icon5, icon6, icon7, icon8, icon9, icon10, icon11};
+#if DISPLAY_BGCOLOR == ST77XX_BLACK
+static const uint16_t * icons[12] = {b_icon0, b_icon1, b_icon2, b_icon3, b_icon4, b_icon5, b_icon6, b_icon7, b_icon8, b_icon9, b_icon10, b_icon11};
+#endif
+#if DISPLAY_BGCOLOR == ST77XX_WHITE
+static const uint16_t * icons[12] = {w_icon0, w_icon1, w_icon2, w_icon3, w_icon4, w_icon5, w_icon6, w_icon7, w_icon8, w_icon9, w_icon10, w_icon11};
+#endif
 void drawIcon(uint8_t rowNum, uint8_t iconNum) {
   uint8_t colOffset = tft.width() - ICON_WIDTH - 2;
   uint8_t rowOffset = ((rowNum - 1) * (ICON_HEIGHT + 1)) + 1;
@@ -445,19 +464,20 @@ void drawIcon(uint8_t rowNum, uint8_t iconNum) {
   if (iconNum != 0xff) {
     for (row = rowOffset; row < ICON_WIDTH + rowOffset; row++) {
       for (col = colOffset; col < ICON_WIDTH + colOffset; col++) {
+
         tft.drawPixel(col, row, pgm_read_word(icons[iconNum] + buffidx));
         buffidx++;
       }
     }
   } else {
-    tft.fillRect(tft.width() - ICON_WIDTH - 2, ((rowNum - 1) * (ICON_HEIGHT + 1)) + 1, ICON_WIDTH, ICON_HEIGHT, ST7735_BLACK);
+    tft.fillRect(tft.width() - ICON_WIDTH - 2, ((rowNum - 1) * (ICON_HEIGHT + 1)) + 1, ICON_WIDTH, ICON_HEIGHT, DISPLAY_BGCOLOR);
   }
 }
 
 void drawText(uint8_t rowNum, uint8_t colorNum, String text) {
   switch (colorNum) {
     case clWHITE:
-      tft.setTextColor(0xFFFF);
+      tft.setTextColor((DISPLAY_BGCOLOR == ST77XX_BLACK) ? 0xFFFF : 0x0000);
       break;
     case clRED:
       tft.setTextColor(0xF800);
@@ -475,7 +495,7 @@ void drawText(uint8_t rowNum, uint8_t colorNum, String text) {
       tft.setTextColor(0x001F);
       break;
     default:
-      tft.setTextColor(0xFFFF);
+      tft.setTextColor((DISPLAY_BGCOLOR == ST77XX_BLACK) ? 0xFFFF : 0x0000);
   }
 
   text.trim();
