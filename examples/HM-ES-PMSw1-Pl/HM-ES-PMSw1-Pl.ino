@@ -20,7 +20,7 @@
 #define CONFIG_BUTTON_PIN 8
 
 #define HLW_MEASURE_INTERVAL            4
-#define POWERMETER_CYCLIC_INTERVAL     60
+#define POWERMETER_CYCLIC_INTERVAL    120
 
 #define RELAY_PIN                       5
 #define SEL_PIN                         9
@@ -39,9 +39,9 @@ using namespace as;
 #define CURRENT_RESISTOR                0.001
 #define VOLTAGE_RESISTOR_UPSTREAM       ( 5 * 470000 ) // Real: 2280k
 #define VOLTAGE_RESISTOR_DOWNSTREAM     ( 1000 ) // Real 1.009k
-#define defaultCurrentMultiplier        13670.9
-#define defaultVoltageMultiplier        441250.69
-#define defaultPowerMultiplier          12168954.98
+//#define defaultCurrentMultiplier        13670.9
+//#define defaultVoltageMultiplier        441250.69
+//#define defaultPowerMultiplier          12168954.98
 HLW8012 hlw8012;
 
 void hlw8012_cf1_interrupt() {
@@ -56,12 +56,12 @@ typedef struct {
   uint32_t Power     = 0;
   uint16_t Current   = 0;
   uint16_t Voltage   = 0;
-  uint8_t  Frequency  = 0;
+  uint8_t  Frequency = 0;
 } hlwValues;
-uint8_t averaging = 1;
 
 hlwValues actualValues ;
 hlwValues lastValues;
+uint8_t averaging = 1;
 
 // define all device properties
 const struct DeviceInfo PROGMEM devinfo = {
@@ -169,20 +169,17 @@ class PowerMeterChannel : public Channel<Hal, MeasureList1, EmptyList, List4, PE
 
       if ((!sendMessage) && (actualValues.Voltage > 0) && (lastValues.Voltage == 0)) sendMessage = true;
 
-
-      DPRINT(F("PowerMeterChannel - PowerDiff ")); DDECLN(abs(actualValues.Power     - lastValues.Power));
-
       if (tickCount > (POWERMETER_CYCLIC_INTERVAL / delay()))  {
         sendMessage = true;
         tickCount = 0;
       }
 
       if ((sendMessage || boot) && (actualValues.Voltage > 0)) {
-        DPRINTLN(F("PowerMeterChannel - SENDING MESSAGE"));
+        //DPRINTLN(F("PowerMeterChannel - SENDING MESSAGE"));
         msg.init(device().nextcount(), boot, actualValues.E_Counter, actualValues.Power, actualValues.Current, actualValues.Voltage, actualValues.Frequency);
         device().sendPeerEvent(msg, *this);
       } else {
-        DPRINTLN(F("PowerMeterChannel - no message to send"));
+        //DPRINTLN(F("PowerMeterChannel - no message to send"));
       }
 
       lastValues.Current = actualValues.Current;
@@ -208,7 +205,7 @@ class PowerMeterChannel : public Channel<Hal, MeasureList1, EmptyList, List4, PE
       txMindelay           = this->getList1().txMindelay();
       averaging            = this->getList1().averaging();
       //DPRINT(F("txMindelay           = ")); DDECLN(txMindelay);
-      DPRINT(F("txThresholdPower     = ")); DDECLN(txThresholdPower);
+      //DPRINT(F("txThresholdPower     = ")); DDECLN(txThresholdPower);
       //DPRINT(F("txThresholdCurrent   = ")); DDECLN(txThresholdCurrent);
       //DPRINT(F("txThresholdVoltage   = ")); DDECLN(txThresholdVoltage);
       //DPRINT(F("txThresholdFrequency = ")); DDECLN(txThresholdFrequency);
