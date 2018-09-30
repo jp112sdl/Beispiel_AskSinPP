@@ -5,8 +5,8 @@
 //- -----------------------------------------------------------------------------------------------------------------------
 
 // define this to read the device id, serial and device type from bootloader section
-//#define USE_OTA_BOOTLOADER
-//#define NDEBUG
+// #define USE_OTA_BOOTLOADER
+// #define NDEBUG
 
 // Works with HLW8012 and CSE7759 measurement chip
 
@@ -87,6 +87,9 @@ class PMSw1List0 : public RegList0<Reg0> {
     }
 };
 
+bool relayOn() {
+  return (digitalRead(RELAY_PIN) == HIGH);
+}
 typedef SwitchChannel<Hal, PEERS_PER_SWCHANNEL, PMSw1List0> SwChannel;
 
 DEFREGISTER(MReg1, CREG_AES_ACTIVE, CREG_AVERAGING, CREG_TX_MINDELAY, CREG_TX_THRESHOLD_POWER, CREG_TX_THRESHOLD_CURRENT, CREG_TX_THRESHOLD_VOLTAGE, CREG_TX_THRESHOLD_FREQUENCY)
@@ -112,13 +115,13 @@ class SensorList1 : public RegList1<SensorReg1> {
       clear();
       transmitTryMax(6);
       condTxDecisionAbove(200);
-      condTxDecisionAbove(0);
+      condTxDecisionBelow(0);
       condTxFalling(false);
       condTxRising(false);
       condTxCyclicBelow(false);
       condTxCyclicAbove(false);
-      //condTxThresholdHi(0);
-      //condTxThresholdLo(0);
+      condTxThresholdHi(0);
+      condTxThresholdLo(0);
     }
 };
 
@@ -162,10 +165,10 @@ class PowerMeterChannel : public Channel<Hal, MeasureList1, EmptyList, List4, PE
 
       bool sendMessage = false;
 
-      if ((!sendMessage) && (txThresholdCurrent > 0)   && (abs((int)(actualValues.Current   - lastValues.Current))   >= txThresholdCurrent))   sendMessage = true;
-      if ((!sendMessage) && (txThresholdFrequency > 0) && (abs((int)(actualValues.Frequency - lastValues.Frequency)) >= txThresholdFrequency)) sendMessage = true;
-      if ((!sendMessage) && (txThresholdPower > 0)     && (abs((int)(actualValues.Power     - lastValues.Power))     >= txThresholdPower))     sendMessage = true;
-      if ((!sendMessage) && (txThresholdVoltage > 0)   && (abs((int)(actualValues.Voltage   - lastValues.Voltage))   >= txThresholdVoltage))   sendMessage = true;
+      if ((txThresholdCurrent > 0)   && (abs((int)(actualValues.Current   - lastValues.Current))   >= txThresholdCurrent))   sendMessage = true;
+      if ((txThresholdFrequency > 0) && (abs((int)(actualValues.Frequency - lastValues.Frequency)) >= txThresholdFrequency)) sendMessage = true;
+      if ((txThresholdPower > 0)     && (abs((int)(actualValues.Power     - lastValues.Power))     >= txThresholdPower))     sendMessage = true;
+      if ((txThresholdVoltage > 0)   && (abs((int)(actualValues.Voltage   - lastValues.Voltage))   >= txThresholdVoltage))   sendMessage = true;
 
       if ((!sendMessage) && (actualValues.Voltage > 0) && (lastValues.Voltage == 0)) sendMessage = true;
 
@@ -232,15 +235,117 @@ class SensorChannel : public Channel<Hal, SensorList1, EmptyList, List4, PEERS_P
     virtual ~SensorChannel () {}
 
     virtual void trigger (__attribute__ ((unused)) AlarmClock& clock) {
-      tick = seconds2ticks(1);
-      //device().sendPeerEvent(msg, *this);
+      static uint8_t evcnt = 0;
+      bool sendMsg = false;
+      tick = seconds2ticks(10);
+
+      /* needs too much i.e. use a smaller bootloader on the pro mini
+      if (relayOn() == true) {
+        SensorEventMsg& rmsg = (SensorEventMsg&)device().message();
+        static uint8_t aboveMsgSent = false;
+        static uint8_t belowMsgSent = false;
+        switch (number()) {
+          case 3:
+            // Leistungssensor
+            if (this->getList1().condTxRising() == true)  {
+              if (actualValues.Power > this->getList1().condTxThresholdHi()) {
+                if ((aboveMsgSent == false && this->getList1().condTxCyclicAbove() == false) || this->getList1().condTxCyclicAbove() == true) {
+                  rmsg.init(device().nextcount(), number(), evcnt++, this->getList1().condTxDecisionAbove(), false , false);
+                  sendMsg = true;
+                  aboveMsgSent = true;
+                }
+              } else {
+                aboveMsgSent = false;
+              }
+            }
+            if (this->getList1().condTxFalling() == true) {
+              if (actualValues.Power < this->getList1().condTxThresholdLo()) {
+                if ((belowMsgSent == false && this->getList1().condTxCyclicBelow() == false) || this->getList1().condTxCyclicBelow() == true) {
+                  rmsg.init(device().nextcount(), number(), evcnt++, this->getList1().condTxDecisionBelow(), false , false);
+                  sendMsg = true;
+                  belowMsgSent = true;
+                }
+              } else {
+                belowMsgSent = false;
+              }
+            }
+            break;
+          case 4:
+            // Stromsensor
+            if (this->getList1().condTxRising() == true)  {
+              if (actualValues.Current > this->getList1().condTxThresholdHi()) {
+                if ((aboveMsgSent == false && this->getList1().condTxCyclicAbove() == false) || this->getList1().condTxCyclicAbove() == true) {
+                  rmsg.init(device().nextcount(), number(), evcnt++, this->getList1().condTxDecisionAbove(), false , false);
+                  sendMsg = true;
+                  aboveMsgSent = true;
+                }
+              } else {
+                aboveMsgSent = false;
+              }
+            }
+            if (this->getList1().condTxFalling() == true) {
+              if (actualValues.Current < this->getList1().condTxThresholdLo()) {
+                if ((belowMsgSent == false && this->getList1().condTxCyclicBelow() == false) || this->getList1().condTxCyclicBelow() == true) {
+                  rmsg.init(device().nextcount(), number(), evcnt++, this->getList1().condTxDecisionBelow(), false , false);
+                  sendMsg = true;
+                  belowMsgSent = true;
+                }
+              } else {
+                belowMsgSent = false;
+              }
+            }
+            break;
+          case 5:
+            // Spannungssensor
+            if (this->getList1().condTxRising() == true)  {
+              if (actualValues.Voltage > this->getList1().condTxThresholdHi()) {
+                if ((aboveMsgSent == false && this->getList1().condTxCyclicAbove() == false) || this->getList1().condTxCyclicAbove() == true) {
+                  rmsg.init(device().nextcount(), number(), evcnt++, this->getList1().condTxDecisionAbove(), false , false);
+                  sendMsg = true;
+                  aboveMsgSent = true;
+                }
+              } else {
+                aboveMsgSent = false;
+              }
+            }
+            if (this->getList1().condTxFalling() == true) {
+              if (actualValues.Voltage < this->getList1().condTxThresholdLo()) {
+                if ((belowMsgSent == false && this->getList1().condTxCyclicBelow() == false) || this->getList1().condTxCyclicBelow() == true) {
+                  rmsg.init(device().nextcount(), number(), evcnt++, this->getList1().condTxDecisionBelow(), false , false);
+                  sendMsg = true;
+                  belowMsgSent = true;
+                }
+              } else {
+                belowMsgSent = false;
+              }
+            }
+            break;
+          case 6:
+            // Frequenzsensor
+            break;
+        }
+
+        if (sendMsg) {
+          device().sendPeerEvent(rmsg, *this);
+          sendMsg = false;
+        }
+      }
+      */
       sysclock.add(*this);
     }
 
     void configChanged() {
       DPRINT(F("SensorChannel ")); DDEC(number()); DPRINTLN(F(" Config changed List1"));
-      DPRINT(F("CREG_COND_TX_THRESHOLD_HI = ")); DDECLN(this->getList1().condTxThresholdHi());
-      DPRINT(F("CREG_COND_TX_THRESHOLD_LO = ")); DDECLN(this->getList1().condTxThresholdLo());
+
+      //DPRINT(F("transmitTryMax      = ")); DDECLN(this->getList1().transmitTryMax());
+      //DPRINT(F("condTxDecisionAbove = ")); DDECLN(this->getList1().condTxDecisionAbove());
+      //DPRINT(F("condTxDecisionBelow = ")); DDECLN(this->getList1().condTxDecisionBelow());
+      //DPRINT(F("condTxFalling       = ")); DDECLN(this->getList1().condTxFalling());
+      //DPRINT(F("condTxRising        = ")); DDECLN(this->getList1().condTxRising());
+      //DPRINT(F("condTxCyclicAbove   = ")); DDECLN(this->getList1().condTxCyclicAbove());
+      //DPRINT(F("condTxCyclicBelow   = ")); DDECLN(this->getList1().condTxCyclicBelow());
+      //DPRINT(F("condTxThresholdHi   = ")); DDECLN(this->getList1().condTxThresholdHi());
+      //DPRINT(F("condTxThresholdLo   = ")); DDECLN(this->getList1().condTxThresholdLo());
     }
 
     void setup(Device<Hal, PMSw1List0>* dev, uint8_t number, uint16_t addr) {
@@ -263,10 +368,6 @@ class MixDevice : public ChannelDevice<Hal, VirtBaseChannel<Hal, PMSw1List0>, 6,
       public:
         MeasureAlarm (MixDevice& d) : Alarm (0), dev(d) {}
         virtual ~MeasureAlarm () {}
-        bool relayOn() {
-          return (digitalRead(RELAY_PIN) == HIGH);
-        }
-
         void trigger (AlarmClock& clock)  {
 
           set(seconds2ticks(HLW_MEASURE_INTERVAL));
@@ -293,10 +394,10 @@ class MixDevice : public ChannelDevice<Hal, VirtBaseChannel<Hal, PMSw1List0>, 6,
 
           actualValues.E_Counter = (hlw8012.getEnergy()  / 3600.0)   * 10;
           actualValues.Frequency = 0; // not implemented
-          DPRINT(F("[HLW] Active Power (W)    : ")); DPRINTLN(actualValues.Power / 100);
-          DPRINT(F("[HLW] Voltage (V)         : ")); DPRINTLN(actualValues.Voltage / 10);
-          DPRINT(F("[HLW] Current (mA)        : ")); DPRINTLN(actualValues.Current);
-          DPRINT(F("[HLW] Agg. energy (Wh)*10 : ")); DPRINTLN(actualValues.E_Counter);
+          DPRINT(F("[HLW] Active Power (W)    : ")); DDECLN(actualValues.Power / 100);
+          DPRINT(F("[HLW] Voltage (V)         : ")); DDECLN(actualValues.Voltage / 10);
+          DPRINT(F("[HLW] Current (mA)        : ")); DDECLN(actualValues.Current);
+          DPRINT(F("[HLW] Agg. energy (Wh)*10 : ")); DDECLN(actualValues.E_Counter);
 
           clock.add(*this);
         }
