@@ -94,7 +94,7 @@ class LuxEventMsg : public Message {
   public:
     void init(uint8_t msgcnt, uint32_t lux) {
       Message::init(0xf, msgcnt, 0x53, RPTEN | BCAST, 0x00, 0xc1);
-      pload[0] = (lux >> 32)  & 0xff;
+      pload[0] = (lux >> 24)  & 0xff;
       pload[1] = (lux >> 16) & 0xff;
       pload[2] = (lux >> 8) & 0xff;
       pload[3] = (lux) & 0xff;
