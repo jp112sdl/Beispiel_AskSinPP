@@ -214,9 +214,9 @@ class PowerMeterChannel : public Channel<Hal, MeasureList1, EmptyList, List4, PE
       txMindelay           = this->getList1().txMindelay();
       averaging            = this->getList1().averaging();
       //DPRINT(F("txMindelay           = ")); DDECLN(txMindelay);
-      //DPRINT(F("txThresholdPower     = ")); DDECLN(txThresholdPower);
-      //DPRINT(F("txThresholdCurrent   = ")); DDECLN(txThresholdCurrent);
-      //DPRINT(F("txThresholdVoltage   = ")); DDECLN(txThresholdVoltage);
+      DPRINT(F("txThresholdPower     = ")); DDECLN(txThresholdPower);
+      DPRINT(F("txThresholdCurrent   = ")); DDECLN(txThresholdCurrent);
+      DPRINT(F("txThresholdVoltage   = ")); DDECLN(txThresholdVoltage);
       //DPRINT(F("txThresholdFrequency = ")); DDECLN(txThresholdFrequency);
     }
 
@@ -246,7 +246,7 @@ class SensorChannel : public Channel<Hal, SensorList1, EmptyList, List4, PEERS_P
       tick = seconds2ticks(10);
 
       /* needs too much i.e. use a smaller bootloader on the pro mini
-      if (relayOn() == true) {
+        if (relayOn() == true) {
         SensorEventMsg& rmsg = (SensorEventMsg&)device().message();
         static uint8_t aboveMsgSent = false;
         static uint8_t belowMsgSent = false;
@@ -335,7 +335,7 @@ class SensorChannel : public Channel<Hal, SensorList1, EmptyList, List4, PEERS_P
           device().sendPeerEvent(rmsg, *this);
           sendMsg = false;
         }
-      }
+        }
       */
       sysclock.add(*this);
     }
