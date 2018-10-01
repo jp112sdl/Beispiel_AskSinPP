@@ -39,9 +39,15 @@ using namespace as;
 #define CURRENT_RESISTOR                0.001
 #define VOLTAGE_RESISTOR_UPSTREAM       ( 5 * 470000 ) // Real: 2280k
 #define VOLTAGE_RESISTOR_DOWNSTREAM     ( 1000 ) // Real 1.009k
-//#define defaultCurrentMultiplier        13670.9
-//#define defaultVoltageMultiplier        441250.69
-//#define defaultPowerMultiplier          12168954.98
+//#define defaultCurrentMultiplier      13670.9
+//#define defaultVoltageMultiplier      441250.69
+//#define defaultPowerMultiplier        12168954.98
+
+//#define USE_OWNCALIBRATION
+#define CurrentMultiplier             14476.52
+#define VoltageMultiplier             427210.87
+#define PowerMultiplier               11492903.00
+
 HLW8012 hlw8012;
 
 void hlw8012_cf1_interrupt() {
@@ -464,6 +470,12 @@ void setup () {
   if ( digitalPinToInterrupt(CF_PIN) == NOT_AN_INTERRUPT ) enableInterrupt(CF_PIN, hlw8012_cf_interrupt, CHANGE); else attachInterrupt(digitalPinToInterrupt(CF_PIN), hlw8012_cf_interrupt, CHANGE);
   hlw8012.begin(CF_PIN, CF1_PIN, SEL_PIN, CURRENT_MODE, true);
   hlw8012.setResistors(CURRENT_RESISTOR, VOLTAGE_RESISTOR_UPSTREAM, VOLTAGE_RESISTOR_DOWNSTREAM);
+
+#ifdef USE_OWNCALIBRATION
+  hlw8012.setCurrentMultiplier(CurrentMultiplier);
+  hlw8012.setVoltageMultiplier(VoltageMultiplier);
+  hlw8012.setPowerMultiplier(PowerMultiplier);
+#endif
 }
 
 void loop() {
