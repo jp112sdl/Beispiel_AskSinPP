@@ -99,10 +99,10 @@ class MeasureList1 : public RegList1<MReg1> {
     void defaults () {
       clear();
       txMindelay(8);
-      txThresholdPower(0);
-      txThresholdCurrent(0);
-      txThresholdVoltage(0);
-      txThresholdFrequency(0);
+      txThresholdPower(10000);
+      txThresholdCurrent(100);
+      txThresholdVoltage(100);
+      txThresholdFrequency(100);
       averaging(1);
     }
 };
