@@ -14,7 +14,7 @@
 #include <EnableInterrupt.h>
 #include <AskSinPP.h>
 #include <LowPower.h>
-#include "HLW8012.h"
+#include <HLW8012.h>
 #include <Switch.h>
 
 #define CONFIG_BUTTON_PIN 8
