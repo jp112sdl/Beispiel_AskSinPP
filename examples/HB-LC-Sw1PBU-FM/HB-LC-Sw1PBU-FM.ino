@@ -107,9 +107,9 @@ void initPeerings (bool first) {
   if ( first == true ) {
     HMID devid;
     sdev.getDeviceID(devid);
-    sdev.sw1Channel().peer(Peer(devid, 1));
-    sdev.btn1Channel().peer(Peer(devid, 2));
-    sdev.btn2Channel().peer(Peer(devid, 3));
+    sdev.sw1Channel().peer(Peer(devid, 2), Peer(devid, 3));
+    sdev.btn1Channel().peer(Peer(devid, 1));
+    sdev.btn2Channel().peer(Peer(devid, 1));
   }
 }
 
