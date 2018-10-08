@@ -1,4 +1,4 @@
-# alternative Firmware für den HM-LC-Sw1PBU-FM
+# alternative Firmware für den HM-LC-Sw2PBU-FM
 
 Mit dieser Firmware lassen sich die beiden Taster (oben / unten) und die Relais getrennt voneinander benutzen.<br>
 (Es wird mind. Version 1.22 des [JP-HB-Devices Addon](https://github.com/jp112sdl/JP-HB-Devices-addon) benötigt)
