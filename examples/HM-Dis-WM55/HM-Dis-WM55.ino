@@ -389,8 +389,9 @@ void setup () {
   if ( digitalPinToInterrupt(BTN2_PIN) == NOT_AN_INTERRUPT ) enableInterrupt(BTN2_PIN, isr2, CHANGE); else attachInterrupt(digitalPinToInterrupt(BTN2_PIN), isr2, CHANGE);
   buttonISR(cfgBtn, CONFIG_BUTTON_PIN);
   sdev.initDone();
+  DDEVINFO(sdev);
   sdev.disp1Channel().changed(true);
-  initDisplay();
+  initDisplay(serial);
 }
 
 void loop() {
@@ -432,10 +433,13 @@ void initDisplay() {
   tft.setRotation(DISPLAY_ROTATE);
   tft.setFont(&FreeMono9pt7bMod);
   tft.setTextWrap(false);
+
+  drawLine(1, clWHITE, 255, F("  WELCOME!"));
   drawLine(2, clWHITE, 255, F("------------"));
-  drawLine(3, clRED, 5, F("AskSin++"));
+  drawLine(3, clRED, 5, F("AskSinPP"));
   drawLine(4, clYELLOW, 6, F("V " ASKSIN_PLUS_PLUS_VERSION));
   drawLine(5, clWHITE, 255, F("------------"));
+  drawLine(6, clGREEN, 8,(char*)serial);
 }
 
 void drawLine(uint8_t rowNum, uint8_t colorNum, uint8_t iconNum, String text) {
