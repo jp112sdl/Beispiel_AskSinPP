@@ -20,3 +20,6 @@ _Geht wunderbar mit einem kleinen Lötbrenner. 3-4 Sekunden auf die Mitte des ES
 
 #### 6. [Deckel](https://github.com/jp112sdl/Beispiel_AskSinPP/blob/master/examples/HM-LC-SW1-FM_Shelly1/Deckel.stl) ausdrucken und am Shelly verkleben
 ![6](https://raw.githubusercontent.com/jp112sdl/Beispiel_AskSinPP/master/examples/HM-LC-SW1-FM_Shelly1/7_ShellyCase.jpg)
+
+**Zuletzt noch anlernen -> Das Gerät erscheint als HM-LC-Sw1-FM in der HomeMatic Zentrale.
+Zum Anlernen den Taster an "SW" lange (ca. 3 Sekunden) drücken.**
