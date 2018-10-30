@@ -48,7 +48,7 @@
 // all library classes are placed in the namespace 'as'
 using namespace as;
 
-#define CURRENT_MODE                    HIGH
+#define CURRENT_MODE                    LOW
 #define CURRENT_RESISTOR                0.001
 #define VOLTAGE_RESISTOR_UPSTREAM       ( 5 * 470000 ) // Real: 2280k
 #define VOLTAGE_RESISTOR_DOWNSTREAM     ( 1000 ) // Real 1.009k
