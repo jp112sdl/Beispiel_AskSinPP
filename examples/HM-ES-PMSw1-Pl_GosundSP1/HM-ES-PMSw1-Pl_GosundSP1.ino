@@ -109,7 +109,97 @@ class PMSw1List0 : public RegList0<Reg0> {
 bool relayOn() {
   return (digitalRead(RELAY_PIN) == HIGH);
 }
-typedef SwitchChannel<Hal, PEERS_PER_SWCHANNEL, PMSw1List0> SwChannel;
+//typedef SwitchChannel<Hal, PEERS_PER_SWCHANNEL, PMSw1List0> SwChannel;
+class SwChannel : public Channel<Hal, SwitchList1, SwitchList3, EmptyList, PEERS_PER_SWCHANNEL, PMSw1List0>, public SwitchStateMachine {
+
+  protected:
+    typedef Channel<Hal, SwitchList1, SwitchList3, EmptyList, PEERS_PER_SWCHANNEL, PMSw1List0> BaseChannel;
+    uint8_t relay_pin;
+    uint8_t led_pin;
+    uint8_t lastmsgcnt;
+
+  public:
+    SwChannel () : BaseChannel(), relay_pin(0), led_pin(0), lastmsgcnt(0xff) {}
+    virtual ~SwChannel() {}
+
+    void init (uint8_t p, uint8_t l) {
+      relay_pin = p;
+      led_pin = l;
+      pinMode(relay_pin, OUTPUT);
+      pinMode(led_pin, OUTPUT);
+      typename BaseChannel::List1 l1 = BaseChannel::getList1();
+      status(l1.powerUpAction() == true ? 200 : 0, 0xffff );
+      BaseChannel::changed(true);
+    }
+
+    void setup(Device<Hal, PMSw1List0>* dev, uint8_t number, uint16_t addr) {
+      BaseChannel::setup(dev, number, addr);
+    }
+
+    uint8_t flags () const {
+      uint8_t flags = SwitchStateMachine::flags();
+      if ( this->device().battery().low() == true ) {
+        flags |= 0x80;
+      }
+      return flags;
+    }
+
+    virtual void switchState(__attribute__((unused)) uint8_t oldstate, uint8_t newstate, __attribute__((unused)) uint32_t delay) {
+      if ( newstate == AS_CM_JT_ON ) {
+        digitalWrite(relay_pin, HIGH);
+        digitalWrite(led_pin, LOW);
+      }
+      else if ( newstate == AS_CM_JT_OFF ) {
+        digitalWrite(relay_pin, LOW);
+        digitalWrite(led_pin, HIGH);
+      }
+      BaseChannel::changed(true);
+    }
+
+    bool process (__attribute__((unused)) const ActionCommandMsg& msg) {
+      return true;
+    }
+
+    bool process (const ActionSetMsg& msg) {
+      status( msg.value(), msg.delay() );
+      return true;
+    }
+
+    bool process (const RemoteEventMsg& msg) {
+      bool lg = msg.isLong();
+      Peer p(msg.peer());
+      uint8_t cnt = msg.counter();
+      typename BaseChannel::List3 l3 = BaseChannel::getList3(p);
+      if ( l3.valid() == true ) {
+        // l3.dump();
+        typename BaseChannel::List3::PeerList pl = lg ? l3.lg() : l3.sh();
+        // pl.dump();
+        if ( cnt != lastmsgcnt || (lg == true && pl.multiExec() == true) ) {
+          lastmsgcnt = cnt;
+          remote(pl, cnt);
+        }
+        return true;
+      }
+      return false;
+    }
+
+    bool process (const SensorEventMsg& msg) {
+      bool lg = msg.isLong();
+      Peer p(msg.peer());
+      uint8_t cnt = msg.counter();
+      uint8_t value = msg.value();
+      typename BaseChannel::List3 l3 = BaseChannel::getList3(p);
+      if ( l3.valid() == true ) {
+        // l3.dump();
+        typename BaseChannel::List3::PeerList pl = lg ? l3.lg() : l3.sh();
+        // pl.dump();
+        sensor(pl, cnt, value);
+        return true;
+      }
+      return false;
+    }
+};
+
 
 DEFREGISTER(MReg1, CREG_AES_ACTIVE, CREG_AVERAGING, CREG_TX_MINDELAY, CREG_TX_THRESHOLD_POWER, CREG_TX_THRESHOLD_CURRENT, CREG_TX_THRESHOLD_VOLTAGE, CREG_TX_THRESHOLD_FREQUENCY)
 class MeasureList1 : public RegList1<MReg1> {
