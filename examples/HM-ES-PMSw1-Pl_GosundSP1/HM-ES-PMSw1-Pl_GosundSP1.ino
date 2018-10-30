@@ -56,10 +56,10 @@ using namespace as;
 //#define defaultVoltageMultiplier      441250.69
 //#define defaultPowerMultiplier        12168954.98
 
-//#define USE_OWNCALIBRATION
-#define CurrentMultiplier             14476.52
-#define VoltageMultiplier             427210.87
-#define PowerMultiplier               11492903.00
+#define USE_OWNCALIBRATION
+#define CurrentMultiplier             22580.87
+#define VoltageMultiplier             313433.96
+#define PowerMultiplier               3209.71
 
 HLW8012 hlw8012;
 
