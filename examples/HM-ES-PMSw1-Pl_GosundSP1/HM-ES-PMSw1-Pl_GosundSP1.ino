@@ -258,8 +258,7 @@ class SensorChannel : public Channel<Hal, SensorList1, EmptyList, List4, PEERS_P
       bool sendMsg = false;
       tick = seconds2ticks(10);
 
-      /* needs too much i.e. use a smaller bootloader on the pro mini
-        if (relayOn() == true) {
+      if (relayOn() == true) {
         SensorEventMsg& rmsg = (SensorEventMsg&)device().message();
         static uint8_t aboveMsgSent = false;
         static uint8_t belowMsgSent = false;
@@ -348,8 +347,7 @@ class SensorChannel : public Channel<Hal, SensorList1, EmptyList, List4, PEERS_P
           device().sendPeerEvent(rmsg, *this);
           sendMsg = false;
         }
-        }
-      */
+      }
       sysclock.add(*this);
     }
 
