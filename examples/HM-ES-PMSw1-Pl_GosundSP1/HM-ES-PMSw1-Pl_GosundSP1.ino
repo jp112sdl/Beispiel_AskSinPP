@@ -573,11 +573,9 @@ void setup () {
   hlw8012.begin(CF_PIN, CF1_PIN, SEL_PIN, CURRENT_MODE, true);
   hlw8012.setResistors(CURRENT_RESISTOR, VOLTAGE_RESISTOR_UPSTREAM, VOLTAGE_RESISTOR_DOWNSTREAM);
 
-#ifdef USE_OWNCALIBRATION
   hlw8012.setCurrentMultiplier(CurrentMultiplier);
   hlw8012.setVoltageMultiplier(VoltageMultiplier);
   hlw8012.setPowerMultiplier(PowerMultiplier);
-#endif
 }
 
 void loop() {
