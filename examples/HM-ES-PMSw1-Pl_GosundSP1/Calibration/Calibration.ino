@@ -42,8 +42,10 @@ void ICACHE_RAM_ATTR hlw8012_cf_interrupt() {
 
 // Library expects an interrupt on both edges
 void setInterrupts() {
-  attachInterrupt(CF1_PIN, hlw8012_cf1_interrupt, CHANGE);
-  attachInterrupt(CF_PIN, hlw8012_cf_interrupt, CHANGE);
+  if ( digitalPinToInterrupt(CF1_PIN) == NOT_AN_INTERRUPT ) enableInterrupt(CF1_PIN, hlw8012_cf1_interrupt, CHANGE); else attachInterrupt(digitalPinToInterrupt(CF1_PIN), hlw8012_cf1_interrupt, CHANGE);
+  if ( digitalPinToInterrupt(CF_PIN) == NOT_AN_INTERRUPT ) enableInterrupt(CF_PIN, hlw8012_cf_interrupt, CHANGE); else attachInterrupt(digitalPinToInterrupt(CF_PIN), hlw8012_cf_interrupt, CHANGE);
+//  attachInterrupt(CF1_PIN, hlw8012_cf1_interrupt, CHANGE);
+//  attachInterrupt(CF_PIN, hlw8012_cf_interrupt, CHANGE);
 }
 
 void calibrate() {
@@ -71,8 +73,6 @@ void setup() {
   Serial.begin(SERIAL_BAUDRATE);
   Serial.println();
   Serial.println();
-  if ( digitalPinToInterrupt(CF1_PIN) == NOT_AN_INTERRUPT ) enableInterrupt(CF1_PIN, hlw8012_cf1_interrupt, CHANGE); else attachInterrupt(digitalPinToInterrupt(CF1_PIN), hlw8012_cf1_interrupt, CHANGE);
-  if ( digitalPinToInterrupt(CF_PIN) == NOT_AN_INTERRUPT ) enableInterrupt(CF_PIN, hlw8012_cf_interrupt, CHANGE); else attachInterrupt(digitalPinToInterrupt(CF_PIN), hlw8012_cf_interrupt, CHANGE);
 
   // Close the relay to switch on the load
   pinMode(RELAY_PIN, OUTPUT);
