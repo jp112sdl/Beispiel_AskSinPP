@@ -4,7 +4,7 @@
 #define SERIAL_BAUDRATE                 57600
 
 #define CALIB_DEFINED_LOAD_W            40.0
-#define CLIB_DEFINED_VOLTAGE_V         230.0
+#define CALIB_DEFINED_VOLTAGE_V         230.0
 
 // GPIOs
 #define RELAY_PIN                       12
@@ -53,8 +53,8 @@ void calibrate() {
 
   // Calibrate using a 60W bulb (pure resistive) on a 230V line
   hlw8012.expectedActivePower(CALIB_DEFINED_LOAD_W);
-  hlw8012.expectedVoltage(CLIB_DEFINED_VOLTAGE_V);
-  hlw8012.expectedCurrent(CALIB_DEFINED_LOAD_W / CLIB_DEFINED_VOLTAGE_V);
+  hlw8012.expectedVoltage(CALIB_DEFINED_VOLTAGE_V);
+  hlw8012.expectedCurrent(CALIB_DEFINED_LOAD_W / CALIB_DEFINED_VOLTAGE_V);
 
   // Show corrected factors
   Serial.print("[HLW] New current multiplier : "); Serial.println(hlw8012.getCurrentMultiplier());
