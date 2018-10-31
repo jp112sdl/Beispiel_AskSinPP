@@ -52,14 +52,10 @@ using namespace as;
 #define CURRENT_RESISTOR                0.001
 #define VOLTAGE_RESISTOR_UPSTREAM       ( 5 * 470000 ) // Real: 2280k
 #define VOLTAGE_RESISTOR_DOWNSTREAM     ( 1000 ) // Real 1.009k
-//#define defaultCurrentMultiplier      13670.9
-//#define defaultVoltageMultiplier      441250.69
-//#define defaultPowerMultiplier        12168954.98
 
-#define USE_OWNCALIBRATION
-#define CurrentMultiplier             22580.87
-#define VoltageMultiplier             313433.96
-#define PowerMultiplier               3209.71
+#define CurrentMultiplier             22361   //25740   // Wert aus 'espurna'
+#define VoltageMultiplier             327831  //313400  // Wert aus 'espurna'
+#define PowerMultiplier               3476844 //3414290 // Wert aus 'espurna'
 
 HLW8012 hlw8012;
 
