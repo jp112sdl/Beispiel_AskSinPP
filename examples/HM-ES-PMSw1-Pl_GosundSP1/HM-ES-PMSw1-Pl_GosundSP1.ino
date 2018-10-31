@@ -94,7 +94,7 @@ const struct DeviceInfo PROGMEM devinfo = {
 
 // Configure the used hardware
 typedef AvrSPI<CS_PIN, MOSI_PIN, MISO_PIN, CLK_PIN> RadioSPI;
-typedef AskSin<StatusLed<LED_RED_PIN>, NoBattery, Radio<RadioSPI, GDO0_PIN> > Hal;
+typedef AskSin<StatusLed<LED_BLUE_PIN>, NoBattery, Radio<RadioSPI, GDO0_PIN> > Hal;
 Hal hal;
 
 DEFREGISTER(Reg0, MASTERID_REGS, DREG_INTKEY, DREG_CONFBUTTONTIME, DREG_LOCALRESETDISABLE)
@@ -563,7 +563,7 @@ void initPeerings (bool first) {
 void setup () {
   DINIT(57600, ASKSIN_PLUS_PLUS_IDENTIFIER);
   bool first = sdev.init(hal);
-  sdev.switchChannel().init(RELAY_PIN, LED_BLUE_PIN);
+  sdev.switchChannel().init(RELAY_PIN, LED_RED_PIN);
   buttonISR(cfgBtn, BUTTON_PIN);
   initPeerings(first);
   sdev.initDone();
