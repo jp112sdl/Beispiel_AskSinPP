@@ -8,7 +8,7 @@
 // #define USE_OTA_BOOTLOADER
 // #define NDEBUG
 
-// Works with HLW8012 and CSE7759 measurement chip
+#define HJLDEBUG // Print measurement values
 
 #define EI_NOTEXTERNAL
 #include <EnableInterrupt.h>
@@ -50,8 +50,8 @@ using namespace as;
 
 #define CURRENT_MODE                    LOW
 #define CURRENT_RESISTOR                0.001
-#define VOLTAGE_RESISTOR_UPSTREAM       ( 5 * 470000 ) // Real: 2280k
-#define VOLTAGE_RESISTOR_DOWNSTREAM     ( 1000 ) // Real 1.009k
+#define VOLTAGE_RESISTOR_UPSTREAM       ( 2 * 100000 ) // ( 2 * 100000 ) = Wert aus 'espurna' // ( 5 * 470000 ) = Wert aus Lib-Beispiel
+#define VOLTAGE_RESISTOR_DOWNSTREAM     ( 1000 )     // Real 1.009k
 
 #define CurrentMultiplier             22361   //25740   // Wert aus 'espurna'
 #define VoltageMultiplier             327831  //313400  // Wert aus 'espurna'
@@ -270,10 +270,10 @@ class PowerMeterChannel : public Channel<Hal, MeasureList1, EmptyList, List4, PE
 
       bool sendMessage = false;
 
-      if ((txThresholdCurrent > 0)   && (abs((int)(actualValues.Current   - lastValues.Current))   >= txThresholdCurrent))   sendMessage = true;
-      if ((txThresholdFrequency > 0) && (abs((int)(actualValues.Frequency - lastValues.Frequency)) >= txThresholdFrequency)) sendMessage = true;
-      if ((txThresholdPower > 0)     && (abs((int)(actualValues.Power     - lastValues.Power))     >= txThresholdPower))     sendMessage = true;
-      if ((txThresholdVoltage > 0)   && (abs((int)(actualValues.Voltage   - lastValues.Voltage))   >= txThresholdVoltage))   sendMessage = true;
+      if ((txThresholdCurrent > 0)   && (abs((int)(actualValues.Current   - lastValues.Current))   >= (int)txThresholdCurrent))   sendMessage = true;
+      if ((txThresholdFrequency > 0) && (abs((int)(actualValues.Frequency - lastValues.Frequency)) >= (int)txThresholdFrequency)) sendMessage = true;
+      if ((txThresholdPower > 0)     && (abs((int)(actualValues.Power     - lastValues.Power))     >= (int)txThresholdPower))     sendMessage = true;
+      if ((txThresholdVoltage > 0)   && (abs((int)(actualValues.Voltage   - lastValues.Voltage))   >= (int)txThresholdVoltage))   sendMessage = true;
 
       if ((!sendMessage) && (actualValues.Voltage > 0) && (lastValues.Voltage == 0)) sendMessage = true;
 
@@ -478,7 +478,7 @@ class MixDevice : public ChannelDevice<Hal, VirtBaseChannel<Hal, PMSw1List0>, 6,
           static uint32_t Power      = 0;
           static uint32_t Current    = 0;
           static uint32_t Voltage    = 0;
-          static uint32_t Frequency  = 0;
+          //static uint32_t Frequency  = 0; //unused
 
           if (avgCounter < averaging) {
             Power   += hlw8012.getActivePower() * 100;
@@ -497,10 +497,13 @@ class MixDevice : public ChannelDevice<Hal, VirtBaseChannel<Hal, PMSw1List0>, 6,
 
           actualValues.E_Counter = (hlw8012.getEnergy()  / 3600.0)   * 10;
           actualValues.Frequency = 0; // not implemented
-          DPRINT(F("[HLW] Active Power (W)    : ")); DDECLN(actualValues.Power / 100);
-          DPRINT(F("[HLW] Voltage (V)         : ")); DDECLN(actualValues.Voltage / 10);
-          DPRINT(F("[HLW] Current (mA)        : ")); DDECLN(actualValues.Current);
-          DPRINT(F("[HLW] Agg. energy (Wh)*10 : ")); DDECLN(actualValues.E_Counter);
+
+#ifdef HJLDEBUG
+          DPRINT(F("[HJL-01] Active Power (W)    : ")); DDECLN(actualValues.Power / 100);
+          DPRINT(F("[HJL-01] Voltage (V)         : ")); DDECLN(actualValues.Voltage / 10);
+          DPRINT(F("[HJL-01] Current (mA)        : ")); DDECLN(actualValues.Current);
+          DPRINT(F("[HJL-01] Agg. energy (Wh)*10 : ")); DDECLN(actualValues.E_Counter);
+#endif
 
           clock.add(*this);
         }
