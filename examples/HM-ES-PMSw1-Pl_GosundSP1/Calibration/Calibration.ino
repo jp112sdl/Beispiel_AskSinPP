@@ -1,6 +1,9 @@
 #include <Arduino.h>
 #include <HLW8012.h>
 
+#define EI_NOTEXTERNAL
+#include <EnableInterrupt.h>
+
 #define SERIAL_BAUDRATE                 57600
 
 #define CALIB_DEFINED_LOAD_W            40.0
@@ -51,7 +54,6 @@ void calibrate() {
     delay(1);
   }
 
-  // Calibrate using a 60W bulb (pure resistive) on a 230V line
   hlw8012.expectedActivePower(CALIB_DEFINED_LOAD_W);
   hlw8012.expectedVoltage(CALIB_DEFINED_VOLTAGE_V);
   hlw8012.expectedCurrent(CALIB_DEFINED_LOAD_W / CALIB_DEFINED_VOLTAGE_V);
@@ -69,6 +71,8 @@ void setup() {
   Serial.begin(SERIAL_BAUDRATE);
   Serial.println();
   Serial.println();
+  if ( digitalPinToInterrupt(CF1_PIN) == NOT_AN_INTERRUPT ) enableInterrupt(CF1_PIN, hlw8012_cf1_interrupt, CHANGE); else attachInterrupt(digitalPinToInterrupt(CF1_PIN), hlw8012_cf1_interrupt, CHANGE);
+  if ( digitalPinToInterrupt(CF_PIN) == NOT_AN_INTERRUPT ) enableInterrupt(CF_PIN, hlw8012_cf_interrupt, CHANGE); else attachInterrupt(digitalPinToInterrupt(CF_PIN), hlw8012_cf_interrupt, CHANGE);
 
   // Close the relay to switch on the load
   pinMode(RELAY_PIN, OUTPUT);
