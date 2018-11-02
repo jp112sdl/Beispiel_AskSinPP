@@ -17,7 +17,7 @@
 #include <HLW8012.h>
 #include <Switch.h>
 
-#define HLW_MEASURE_INTERVAL            4
+#define HLW_MEASURE_INTERVAL            1
 #define POWERMETER_CYCLIC_INTERVAL    120
 
 // use MightyCore Standard pinout for ATmega644PA
@@ -77,7 +77,7 @@ typedef struct {
 hlwValues actualValues ;
 hlwValues lastValues;
 uint8_t averaging = 1;
-
+bool    resetAverageCounting = false;
 // define all device properties
 const struct DeviceInfo PROGMEM devinfo = {
   {0x00, 0xac, 0x00},     // Device ID
@@ -91,7 +91,9 @@ const struct DeviceInfo PROGMEM devinfo = {
 // Configure the used hardware
 typedef AvrSPI<CS_PIN, MOSI_PIN, MISO_PIN, CLK_PIN> RadioSPI;
 typedef AskSin<StatusLed<LED_BLUE_PIN>, NoBattery, Radio<RadioSPI, GDO0_PIN> > Hal;
+typedef StatusLed<LED_RED_PIN> RedLedType;
 Hal hal;
+RedLedType RedLed;
 
 DEFREGISTER(Reg0, MASTERID_REGS, DREG_INTKEY, DREG_CONFBUTTONTIME, DREG_LOCALRESETDISABLE)
 class PMSw1List0 : public RegList0<Reg0> {
@@ -142,12 +144,13 @@ class SwChannel : public Channel<Hal, SwitchList1, SwitchList3, EmptyList, PEERS
 
     virtual void switchState(__attribute__((unused)) uint8_t oldstate, uint8_t newstate, __attribute__((unused)) uint32_t delay) {
       if ( newstate == AS_CM_JT_ON ) {
+        resetAverageCounting = true;
         digitalWrite(relay_pin, HIGH);
-        digitalWrite(led_pin, LOW);
+        RedLed.ledOn();
       }
       else if ( newstate == AS_CM_JT_OFF ) {
         digitalWrite(relay_pin, LOW);
-        digitalWrite(led_pin, HIGH);
+        RedLed.ledOff();
       }
       BaseChannel::changed(true);
     }
@@ -474,11 +477,20 @@ class MixDevice : public ChannelDevice<Hal, VirtBaseChannel<Hal, PMSw1List0>, 6,
         void trigger (AlarmClock& clock)  {
 
           set(seconds2ticks(HLW_MEASURE_INTERVAL));
-          static uint8_t  avgCounter = 0;
           static uint32_t Power      = 0;
           static uint32_t Current    = 0;
           static uint32_t Voltage    = 0;
+          static uint8_t  avgCounter = 0;
           //static uint32_t Frequency  = 0; //unused
+
+          if (resetAverageCounting == true) {
+            //DPRINTLN(F("*** RESETTING AVERAGING ***"));
+            resetAverageCounting = false;
+            avgCounter = 0;
+            Power = 0;
+            Voltage = 0;
+            Current = 0;
+          }
 
           if (avgCounter < averaging) {
             Power   += hlw8012.getActivePower() * 100;
@@ -489,21 +501,18 @@ class MixDevice : public ChannelDevice<Hal, VirtBaseChannel<Hal, PMSw1List0>, 6,
             actualValues.Power   = relayOn() ? (Power / averaging) : 0;
             actualValues.Voltage = (Voltage / averaging);
             actualValues.Current = relayOn() ? (Current / averaging) : 0;
-            avgCounter = 0;
-            Power = 0;
-            Voltage = 0;
-            Current = 0;
+            resetAverageCounting = true;
+
+#ifdef HJLDEBUG
+            DPRINT(F("[HJL-01] Active Power (W)    : ")); DDECLN(actualValues.Power / 100);
+            DPRINT(F("[HJL-01] Voltage (V)         : ")); DDECLN(actualValues.Voltage / 10);
+            DPRINT(F("[HJL-01] Current (mA)        : ")); DDECLN(actualValues.Current);
+            DPRINT(F("[HJL-01] Agg. energy (Wh)*10 : ")); DDECLN(actualValues.E_Counter);
+#endif
           }
 
           actualValues.E_Counter = (hlw8012.getEnergy()  / 3600.0)   * 10;
           actualValues.Frequency = 0; // not implemented
-
-#ifdef HJLDEBUG
-          DPRINT(F("[HJL-01] Active Power (W)    : ")); DDECLN(actualValues.Power / 100);
-          DPRINT(F("[HJL-01] Voltage (V)         : ")); DDECLN(actualValues.Voltage / 10);
-          DPRINT(F("[HJL-01] Current (mA)        : ")); DDECLN(actualValues.Current);
-          DPRINT(F("[HJL-01] Agg. energy (Wh)*10 : ")); DDECLN(actualValues.E_Counter);
-#endif
 
           clock.add(*this);
         }
@@ -565,6 +574,9 @@ void setup () {
   sdev.switchChannel().init(RELAY_PIN, LED_RED_PIN);
   buttonISR(cfgBtn, BUTTON_PIN);
   initPeerings(first);
+  RedLed.init();
+  RedLed.invert(true);
+  RedLed.ledOff();
   sdev.initDone();
   sdev.led().invert(true);
   if ( digitalPinToInterrupt(CF1_PIN) == NOT_AN_INTERRUPT ) enableInterrupt(CF1_PIN, hlw8012_cf1_interrupt, FALLING); else attachInterrupt(digitalPinToInterrupt(CF1_PIN), hlw8012_cf1_interrupt, FALLING);
