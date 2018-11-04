@@ -1,9 +1,6 @@
 [submodule "examples/HB-UNI-SenAct-4-4"]
 	path = examples/HB-UNI-SenAct-4-4
 	url = https://jp112sdl@github.com/jp112sdl/HB-UNI-SenAct-4-4.git
-[submodule "examples/HB-UNI-Sen-WEA"]
-	path = examples/HB-UNI-Sen-WEA
-	url = https://jp112sdl@github.com/jp112sdl/HB-UNI-Sen-WEA.git
 [submodule "examples/HM-LC-Bl1-FM-2"]
 	path = examples/HM-LC-Bl1-FM-2
 	url = https://jp112sdl@github.com/jp112sdl/HM-LC-Bl1-FM-2.git
