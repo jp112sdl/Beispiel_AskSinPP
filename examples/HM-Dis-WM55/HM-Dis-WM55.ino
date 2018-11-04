@@ -425,7 +425,7 @@ void DisplayOn() {
 
 enum HMColors { clWHITE, clRED, clORANGE, clYELLOW, clGREEN, clBLUE };
 
-void initDisplay() {
+void initDisplay(uint8_t serial[11]) {
   tft.initR(INITR_GREENTAB);
   pinMode(TFT_LED, OUTPUT);
   digitalWrite(TFT_LED, HIGH);
