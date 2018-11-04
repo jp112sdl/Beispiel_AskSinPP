@@ -20,9 +20,6 @@
 [submodule "examples/HB-UNI-Sen-DIST-US"]
 	path = examples/HB-UNI-Sen-DIST-US
 	url = https://jp112sdl@github.com/jp112sdl/HB-UNI-Sen-DIST-US.git
-[submodule "examples/HB-UNI-RGB-LED-CTRL"]
-	path = examples/HB-UNI-RGB-LED-CTRL
-	url = https://jp112sdl@github.com/jp112sdl/HB-UNI-RGB-LED-CTRL.git
 [submodule "examples/HB-UNI-Sen-LEV-US"]
 	path = examples/HB-UNI-Sen-LEV-US
 	url = https://jp112sdl@github.com/jp112sdl/HB-UNI-Sen-LEV-US.git
