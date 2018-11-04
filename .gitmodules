@@ -19,9 +19,6 @@
 [submodule "examples/HB-UNI-Sen-TEMP-IR"]
 	path = examples/HB-UNI-Sen-TEMP-IR
 	url = https://jp112sdl@github.com/jp112sdl/HB-UNI-Sen-TEMP-IR.git
-[submodule "examples/HB-UNI-Sen-DUMMY-BEACON"]
-	path = examples/HB-UNI-Sen-DUMMY-BEACON
-	url = https://jp112sdl@github.com/jp112sdl/HB-UNI-Sen-DUMMY-BEACON.git
 [submodule "examples/HB-UNI-Sen-VOLT"]
 	path = examples/HB-UNI-Sen-VOLT
 	url = https://jp112sdl@github.com/jp112sdl/HB-UNI-Sen-VOLT.git
