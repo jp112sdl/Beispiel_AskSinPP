@@ -95,7 +95,6 @@ typedef AvrSPI<CS_PIN, MOSI_PIN, MISO_PIN, CLK_PIN> RadioSPI;
 typedef AskSin<StatusLed<LED_BLUE_PIN>, NoBattery, Radio<RadioSPI, GDO0_PIN> > Hal;
 typedef StatusLed<LED_RED_PIN> RedLedType;
 Hal hal;
-RedLedType RedLed;
 
 DEFREGISTER(Reg0, MASTERID_REGS, DREG_INTKEY, DREG_CONFBUTTONTIME, DREG_LOCALRESETDISABLE)
 class PMSw1List0 : public RegList0<Reg0> {
@@ -110,51 +109,31 @@ bool relayOn() {
   return (digitalRead(RELAY_PIN) == HIGH);
 }
 //typedef SwitchChannel<Hal, PEERS_PER_SWCHANNEL, PMSw1List0> SwChannel;
-class SwChannel : public ActorChannel<Hal, SwitchList1, SwitchList3, PEERS_PER_SWCHANNEL, PMSw1List0, SwitchStateMachine>  {
+class SwChannel : public SwitchChannel<Hal, PEERS_PER_SWCHANNEL, PMSw1List0>  {
 
   protected:
-    typedef ActorChannel<Hal, SwitchList1, SwitchList3, PEERS_PER_SWCHANNEL, PMSw1List0, SwitchStateMachine> BaseChannel;
-    uint8_t relay_pin;
-    uint8_t led_pin;
-    uint8_t lastmsgcnt;
+    typedef SwitchChannel<Hal, PEERS_PER_SWCHANNEL, PMSw1List0> BaseChannel;
+    RedLedType RedLed;
 
   public:
-    SwChannel () : BaseChannel(), relay_pin(0), led_pin(0), lastmsgcnt(0xff) {}
+    SwChannel () : BaseChannel() {}
     virtual ~SwChannel() {}
 
-    void init (uint8_t p, uint8_t l) {
-      relay_pin = p;
-      led_pin = l;
-      pinMode(relay_pin, OUTPUT);
-      pinMode(led_pin, OUTPUT);
-      typename BaseChannel::List1 l1 = BaseChannel::getList1();
-      this->set(l1.powerUpAction() == true ? 200 : 0, 0, 0xffff );
-      this->changed(true);
+    void init (uint8_t p) {
+      RedLed.init();
+      RedLed.invert(true);
+      BaseChannel::init(p);
     }
 
-    void setup(Device<Hal, PMSw1List0>* dev, uint8_t number, uint16_t addr) {
-      BaseChannel::setup(dev, number, addr);
-    }
-
-    uint8_t flags () const {
-      uint8_t flags = SwitchStateMachine::flags();
-      if ( this->device().battery().low() == true ) {
-        flags |= 0x80;
-      }
-      return flags;
-    }
-
-    virtual void switchState(__attribute__((unused)) uint8_t oldstate, uint8_t newstate, __attribute__((unused)) uint32_t delay) {
+    virtual void switchState(__attribute__((unused)) uint8_t oldstate, uint8_t newstate,uint32_t delay) {
+      BaseChannel::switchState(oldstate, newstate, delay);
       if ( newstate == AS_CM_JT_ON ) {
         resetAverageCounting = true;
-        digitalWrite(relay_pin, HIGH);
         RedLed.ledOn();
       }
       else if ( newstate == AS_CM_JT_OFF ) {
-        digitalWrite(relay_pin, LOW);
         RedLed.ledOff();
       }
-      this->changed(true);
     }
 };
 
@@ -521,23 +500,20 @@ MixDevice sdev(devinfo, 0x20);
 ConfigToggleButton<MixDevice> cfgBtn(sdev);
 
 void initPeerings (bool first) {
-  HMID devid;
-  sdev.getDeviceID(devid);
-  Peer ipeer(devid, 1);
-  sdev.channel(1).peer(ipeer);
+  if( first == true ) {
+    sdev.switchChannel().peer(cfgBtn.peer());
+  }
 }
 
 void setup () {
   DINIT(57600, ASKSIN_PLUS_PLUS_IDENTIFIER);
   bool first = sdev.init(hal);
-  sdev.switchChannel().init(RELAY_PIN, LED_RED_PIN);
+  sdev.switchChannel().init(RELAY_PIN);
   buttonISR(cfgBtn, BUTTON_PIN);
   initPeerings(first);
-  RedLed.init();
-  RedLed.invert(true);
-  RedLed.ledOff();
-  sdev.initDone();
   sdev.led().invert(true);
+  sdev.initDone();
+  DDEVINFO(sdev);
   if ( digitalPinToInterrupt(CF1_PIN) == NOT_AN_INTERRUPT ) enableInterrupt(CF1_PIN, hlw8012_cf1_interrupt, FALLING); else attachInterrupt(digitalPinToInterrupt(CF1_PIN), hlw8012_cf1_interrupt, FALLING);
   if ( digitalPinToInterrupt(CF_PIN) == NOT_AN_INTERRUPT ) enableInterrupt(CF_PIN, hlw8012_cf_interrupt, FALLING); else attachInterrupt(digitalPinToInterrupt(CF_PIN), hlw8012_cf_interrupt, FALLING);
   hlw8012.begin(CF_PIN, CF1_PIN, SEL_PIN, CURRENT_MODE, true);
