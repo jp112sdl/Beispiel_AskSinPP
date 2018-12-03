@@ -8,6 +8,8 @@
 // #define USE_OTA_BOOTLOADER
 // #define NDEBUG
 
+// #define USE_HW_SERIAL
+
 #define HJLDEBUG // Print measurement values
 
 #define EI_NOTEXTERNAL
