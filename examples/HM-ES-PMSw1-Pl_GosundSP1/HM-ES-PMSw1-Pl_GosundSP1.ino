@@ -108,10 +108,10 @@ bool relayOn() {
   return (digitalRead(RELAY_PIN) == HIGH);
 }
 //typedef SwitchChannel<Hal, PEERS_PER_SWCHANNEL, PMSw1List0> SwChannel;
-class SwChannel : public Channel<Hal, SwitchList1, SwitchList3, EmptyList, PEERS_PER_SWCHANNEL, PMSw1List0>, public SwitchStateMachine {
+class SwChannel : public ActorChannel<Hal, SwitchList1, SwitchList3, PEERS_PER_SWCHANNEL, PMSw1List0, SwitchStateMachine>  {
 
   protected:
-    typedef Channel<Hal, SwitchList1, SwitchList3, EmptyList, PEERS_PER_SWCHANNEL, PMSw1List0> BaseChannel;
+    typedef ActorChannel<Hal, SwitchList1, SwitchList3, PEERS_PER_SWCHANNEL, PMSw1List0, SwitchStateMachine> BaseChannel;
     uint8_t relay_pin;
     uint8_t led_pin;
     uint8_t lastmsgcnt;
@@ -126,8 +126,8 @@ class SwChannel : public Channel<Hal, SwitchList1, SwitchList3, EmptyList, PEERS
       pinMode(relay_pin, OUTPUT);
       pinMode(led_pin, OUTPUT);
       typename BaseChannel::List1 l1 = BaseChannel::getList1();
-      status(l1.powerUpAction() == true ? 200 : 0, 0xffff );
-      BaseChannel::changed(true);
+      this->set(l1.powerUpAction() == true ? 200 : 0, 0, 0xffff );
+      this->changed(true);
     }
 
     void setup(Device<Hal, PMSw1List0>* dev, uint8_t number, uint16_t addr) {
@@ -152,50 +152,7 @@ class SwChannel : public Channel<Hal, SwitchList1, SwitchList3, EmptyList, PEERS
         digitalWrite(relay_pin, LOW);
         RedLed.ledOff();
       }
-      BaseChannel::changed(true);
-    }
-
-    bool process (__attribute__((unused)) const ActionCommandMsg& msg) {
-      return true;
-    }
-
-    bool process (const ActionSetMsg& msg) {
-      status( msg.value(), msg.delay() );
-      return true;
-    }
-
-    bool process (const RemoteEventMsg& msg) {
-      bool lg = msg.isLong();
-      Peer p(msg.peer());
-      uint8_t cnt = msg.counter();
-      typename BaseChannel::List3 l3 = BaseChannel::getList3(p);
-      if ( l3.valid() == true ) {
-        // l3.dump();
-        typename BaseChannel::List3::PeerList pl = lg ? l3.lg() : l3.sh();
-        // pl.dump();
-        if ( cnt != lastmsgcnt || (lg == true && pl.multiExec() == true) ) {
-          lastmsgcnt = cnt;
-          remote(pl, cnt);
-        }
-        return true;
-      }
-      return false;
-    }
-
-    bool process (const SensorEventMsg& msg) {
-      bool lg = msg.isLong();
-      Peer p(msg.peer());
-      uint8_t cnt = msg.counter();
-      uint8_t value = msg.value();
-      typename BaseChannel::List3 l3 = BaseChannel::getList3(p);
-      if ( l3.valid() == true ) {
-        // l3.dump();
-        typename BaseChannel::List3::PeerList pl = lg ? l3.lg() : l3.sh();
-        // pl.dump();
-        sensor(pl, cnt, value);
-        return true;
-      }
-      return false;
+      this->changed(true);
     }
 };
 
