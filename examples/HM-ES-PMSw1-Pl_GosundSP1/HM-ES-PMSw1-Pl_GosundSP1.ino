@@ -41,9 +41,9 @@
 #define GDO0_PIN                        2
 
 // number of available peers per channel
-#define PEERS_PER_SWCHANNEL     4
-#define PEERS_PER_PMCHANNEL     1
-#define PEERS_PER_SENSORCHANNEL 4
+#define PEERS_PER_SWCHANNEL     8
+#define PEERS_PER_PMCHANNEL     8
+#define PEERS_PER_SENSORCHANNEL 8
 
 // all library classes are placed in the namespace 'as'
 using namespace as;
