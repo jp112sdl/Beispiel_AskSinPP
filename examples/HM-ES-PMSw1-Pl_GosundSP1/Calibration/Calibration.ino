@@ -26,7 +26,7 @@
 
 // These are the nominal values for the resistors in the circuit
 #define CURRENT_RESISTOR                0.001
-#define VOLTAGE_RESISTOR_UPSTREAM       ( 5 * 470000 ) // Real: 2280k
+#define VOLTAGE_RESISTOR_UPSTREAM       ( 2 * 100000 ) // Real: 2280k
 #define VOLTAGE_RESISTOR_DOWNSTREAM     ( 1000 ) // Real 1.009k
 
 HLW8012 hlw8012;
