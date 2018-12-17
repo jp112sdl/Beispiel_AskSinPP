@@ -18,7 +18,8 @@
 // Arduino Pro mini 8 Mhz
 // Arduino pin for the config button
 #define CONFIG_BUTTON_PIN 8
-
+// Arduino pin for the StatusLed
+#define LED_PIN           4
 // number of available peers per channel
 #define PEERS_PER_CHANNEL 6
 
@@ -65,7 +66,7 @@ const struct DeviceInfo PROGMEM devinfo = {
 */
 typedef AvrSPI<10, 11, 12, 13> SPIType;
 typedef Radio<SPIType, 2> RadioType;
-typedef StatusLed<4> LedType;
+typedef StatusLed<LED_PIN> LedType;
 typedef AskSin<LedType, BatterySensor, RadioType> BaseHal;
 class Hal : public BaseHal {
   public:

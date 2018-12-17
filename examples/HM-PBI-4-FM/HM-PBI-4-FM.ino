@@ -49,7 +49,7 @@ const struct DeviceInfo PROGMEM devinfo = {
  */
 typedef AvrSPI<10, 11, 12, 13> SPIType;
 typedef Radio<SPIType,2> RadioType;
-typedef DualStatusLed<5,4> LedType;
+typedef DualStatusLed<LED_PIN2, LED_PIN> LedType;
 typedef AskSin<LedType,BatterySensor,RadioType> HalType;
 class Hal : public HalType {
   // extra clock to count button press events

@@ -23,7 +23,6 @@
 
 #include <Switch.h>
 
-
 // we use a Pro Mini
 // Arduino pin for the LED
 // D4 == PIN 4 on Pro Mini
@@ -54,7 +53,7 @@ const struct DeviceInfo PROGMEM devinfo = {
    Configure the used hardware
 */
 typedef AvrSPI<10, 11, 12, 13> RadioSPI;
-typedef AskSin<StatusLed<4>, NoBattery, Radio<RadioSPI, 2> > Hal;
+typedef AskSin<StatusLed<LED_PIN>, NoBattery, Radio<RadioSPI, 2> > Hal;
 
 // setup the device with channel type and number of channels
 typedef MultiChannelDevice<Hal, SwitchChannel<Hal, PEERS_PER_CHANNEL, List0>, 4> SwitchType;

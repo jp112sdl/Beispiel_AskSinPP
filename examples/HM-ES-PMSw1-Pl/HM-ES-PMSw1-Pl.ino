@@ -26,6 +26,7 @@
 #define SEL_PIN                         9
 #define CF1_PIN                         7
 #define CF_PIN                          6
+#define LED_PIN                         4
 
 // number of available peers per channel
 #define PEERS_PER_SWCHANNEL     4
@@ -81,7 +82,7 @@ const struct DeviceInfo PROGMEM devinfo = {
 
 // Configure the used hardware
 typedef AvrSPI<10, 11, 12, 13> RadioSPI;
-typedef AskSin<StatusLed<4>, NoBattery, Radio<RadioSPI, 2> > Hal;
+typedef AskSin<StatusLed<LED_PIN>, NoBattery, Radio<RadioSPI, 2> > Hal;
 Hal hal;
 
 DEFREGISTER(Reg0, MASTERID_REGS, DREG_INTKEY, DREG_CONFBUTTONTIME, DREG_LOCALRESETDISABLE)
