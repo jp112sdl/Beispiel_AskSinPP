@@ -26,7 +26,7 @@ namespace as {
 template <uint8_t OFFSTATE = HIGH, uint8_t ONSTATE = LOW, WiringPinMode MODE = INPUT_PULLUP>
 class StateButton: public Alarm {
 
-#define DEBOUNCETIME millis2ticks(30)
+#define DEBOUNCETIME millis2ticks(50)
 
   public:
     enum States {
@@ -100,6 +100,7 @@ class StateButton: public Alarm {
       switch ( state() ) {
         case released:
           ma.set(millis2ticks(MULTIPRESSTIME));
+          sysclock.cancel(ma);
           sysclock.add(ma);
         case longreleased:
           nextstate = none;
