@@ -7,10 +7,9 @@
 // define this to read the device id, serial and device type from bootloader section
 // #define USE_OTA_BOOTLOADER
 // #define NDEBUG
-
 // #define USE_HW_SERIAL
-
-#define HJLDEBUG // Print measurement values
+//#define HJLDEBUG // Print measurement values
+//#define USE_CC1101_ALT_FREQ_86835  //when using 'bad' cc1101 module
 
 #define EI_NOTEXTERNAL
 #include <EnableInterrupt.h>
@@ -92,9 +91,25 @@ const struct DeviceInfo PROGMEM devinfo = {
 
 // Configure the used hardware
 typedef AvrSPI<CS_PIN, MOSI_PIN, MISO_PIN, CLK_PIN> RadioSPI;
-typedef AskSin<StatusLed<LED_BLUE_PIN>, NoBattery, Radio<RadioSPI, GDO0_PIN> > Hal;
+typedef AskSin<StatusLed<LED_BLUE_PIN>, NoBattery, Radio<RadioSPI, GDO0_PIN> > BaseHal;
 typedef StatusLed<LED_RED_PIN> RedLedType;
-Hal hal;
+
+class Hal: public BaseHal {
+  public:
+    void init(const HMID& id) {
+      BaseHal::init(id);
+#ifdef USE_CC1101_ALT_FREQ_86835
+      // 2165E8 == 868.35 MHz
+      radio.initReg(CC1101_FREQ2, 0x21);
+      radio.initReg(CC1101_FREQ1, 0x65);
+      radio.initReg(CC1101_FREQ0, 0xE8);
+#endif
+    }
+
+    bool runready () {
+      return sysclock.runready() || BaseHal::runready();
+    }
+} hal;
 
 DEFREGISTER(Reg0, MASTERID_REGS, DREG_INTKEY, DREG_CONFBUTTONTIME, DREG_LOCALRESETDISABLE)
 class PMSw1List0 : public RegList0<Reg0> {
