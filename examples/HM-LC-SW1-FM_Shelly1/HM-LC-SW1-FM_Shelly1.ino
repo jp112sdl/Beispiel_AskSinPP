@@ -35,7 +35,7 @@ const struct DeviceInfo PROGMEM devinfo = {
 
 
 typedef AskSin<StatusLed<LED_PIN>, NoBattery, Radio<AvrSPI<10, 11, 12, 13> , 2> > Hal;
-typedef MultiChannelDevice<Hal, SwitchChannel<Hal, PEERS_PER_CHANNEL, List0>, 4> SwitchType;
+typedef MultiChannelDevice<Hal, SwitchChannel<Hal, PEERS_PER_CHANNEL, List0>, 1> SwitchType;
 
 Hal hal;
 SwitchType sdev(devinfo, 0x20);
