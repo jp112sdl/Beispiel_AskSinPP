@@ -149,7 +149,7 @@ void setup () {
   DINIT(57600,ASKSIN_PLUS_PLUS_IDENTIFIER);
   sdev.init(hal);
   buttonISR(cfgBtn,CONFIG_BUTTON_PIN);
-  const uint8_t posmap[4] = {Positions::PosC,Positions::PosC,Positions::PosB,Positions::PosA};
+  const uint8_t posmap[4] = {Position::State::PosC,Position::State::PosC,Position::State::PosB,Position::State::PosA};
   sdev.channel(1).init(SENS1_PIN,SENS2_PIN,posmap);
   sdev.initDone();
 }
