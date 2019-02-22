@@ -462,6 +462,6 @@ void loop() {
   bool worked = hal.runready();
   bool poll = sdev.pollRadio();
   if( worked == false && poll == false ) {
-    hal.activity.savePower<Idle<> >(hal);
+    hal.activity.savePower<Sleep<> >(hal);
   }
 }
