@@ -70,7 +70,7 @@ class WaOdList0 : public RegList0<WaOdReg0> {
     void defaults () {
       clear();
       // cyclicInfoMsgDis(0);
-      // transmitDevTryMax(6);
+      transmitDevTryMax(6);
       // localResetDisable(false);
     }
 };
