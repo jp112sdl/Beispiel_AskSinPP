@@ -6,6 +6,7 @@
 
 // define this to read the device id, serial and device type from bootloader section
 // #define USE_OTA_BOOTLOADER
+#define USE_WOR
 
 #define EI_NOTEXTERNAL
 #include <EnableInterrupt.h>
@@ -84,7 +85,6 @@ public:
 Hal hal;
 SwitchType sdev(devinfo,0x20);
 ConfigButton<SwitchType> cfgBtn(sdev);
-BurstDetector<Hal> bd(hal);
 
 void initPeerings (bool first) {
   // create internal peerings - CCU2 needs this
@@ -112,8 +112,6 @@ void setup () {
   sdev.channel(8).init(RELAY8_PIN);
   buttonISR(cfgBtn,CONFIG_BUTTON_PIN);
   initPeerings(first);
-  // start burst detection
-  bd.enable(sysclock);
   // stay on for 15 seconds after start
   hal.activity.stayAwake(seconds2ticks(15));
   // measure battery every hour
