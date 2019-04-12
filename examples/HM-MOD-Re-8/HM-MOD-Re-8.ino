@@ -34,7 +34,7 @@
 #define RELAY8_PIN 5
 
 // number of available peers per channel
-#define PEERS_PER_CHANNEL 8
+#define PEERS_PER_CHANNEL 4
 
 // all library classes are placed in the namespace 'as'
 using namespace as;
