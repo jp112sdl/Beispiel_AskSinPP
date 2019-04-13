@@ -12,7 +12,8 @@
 #include <LowPower.h>
 #include <Register.h>
 //#include <sensors/Bh1750.h>
-#include <sensors/Tsl2561.h>
+//#include <sensors/Tsl2561.h>
+#include <sensors/Max44009.h>
 
 #include <MultiChannelDevice.h>
 
@@ -110,7 +111,8 @@ class LuxChannel : public Channel<Hal, LiList1, EmptyList, List4, PEERS_PER_CHAN
     //Bh1750<>     bh1750;
     //Tsl2561<>                   tsl2561; // Brücke zwischen L und GND
     //Tsl2561<TSL2561_ADDR_HIGH>  tsl2561; // Brücke zwischen H und GND
-    Tsl2561<TSL2561_ADDR_FLOAT> tsl2561; // keine Brücke gesetzt
+    //Tsl2561<TSL2561_ADDR_FLOAT> tsl2561; // keine Brücke gesetzt
+    MAX44009<>                  max44009;
 
     uint8_t last_flags = 0xff;
 
@@ -123,8 +125,10 @@ class LuxChannel : public Channel<Hal, LiList1, EmptyList, List4, PEERS_PER_CHAN
       DPRINT("Measure... ");
       //bh1750.measure();
       //lux = bh1750.brightness();
-      tsl2561.measure();
-      lux = tsl2561.brightness();
+      //tsl2561.measure();
+      //lux = tsl2561.brightness();
+      max44009.measure();
+      lux = max44009.brightness();
       DDEC(lux);
       DPRINTLN(" lux");
     }
@@ -162,7 +166,8 @@ class LuxChannel : public Channel<Hal, LiList1, EmptyList, List4, PEERS_PER_CHAN
       Channel::setup(dev, number, addr);
       sysclock.add(*this);
       //bh1750.init();
-      tsl2561.init();
+      //tsl2561.init();
+      max44009.init();
     }
 
     uint8_t status () const {
