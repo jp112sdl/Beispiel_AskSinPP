@@ -75,9 +75,10 @@ public:
   }
 };
 
-class BlChannel : public BlindChannel<Hal,PEERS_PER_BlindChannel,BlindList0> {
+class BlChannel : public ActorChannel<Hal,BlindList1,BlindList3,PEERS_PER_BlindChannel,BlindList0,BlindStateMachine> {
 public:
-  typedef BlindChannel<Hal,PEERS_PER_BlindChannel,BlindList0> BaseChannel;
+  typedef ActorChannel<Hal,BlindList1,BlindList3,PEERS_PER_BlindChannel,BlindList0,BlindStateMachine> BaseChannel;
+
   BlChannel () {}
   virtual ~BlChannel () {}
 
