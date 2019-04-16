@@ -89,7 +89,7 @@ class StateButton: public Alarm {
       presscount = 0;
     }
 
-    uint8_t multi() const {
+    uint8_t multi() {
       multi(presscount);
       return mul;
     }

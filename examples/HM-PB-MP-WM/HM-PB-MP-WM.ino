@@ -33,8 +33,7 @@
 //#define BTN3_PIN 16
 //#define BTN4_PIN 17
 
-
-#ifdef BTN3_PIN && BTN4_PIN
+#if defined(BTN3_PIN) && defined(BTN4_PIN)
 #define CHANNELS 8
 #define DEV_MODEL {0x00, 0x35}
 #else
