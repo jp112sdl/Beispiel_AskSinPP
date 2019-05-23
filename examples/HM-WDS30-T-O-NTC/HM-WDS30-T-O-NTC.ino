@@ -84,7 +84,7 @@ class WeatherEventMsg : public Message {
       if ( batlow == true ) {
         t1 |= 0x80; // set bat low bit
       }
-      Message::init(0xb, msgcnt, 0x70, (msgcnt % 20 == 1) ? BIDI : BCAST, t1, t2);
+      Message::init(0xb, msgcnt, 0x70, (msgcnt % 20 == 1) ? (BIDI | WKMEUP): BCAST, t1, t2);
     }
 };
 

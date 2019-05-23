@@ -100,7 +100,7 @@ class UList0 : public RegList0<Reg0> {
 class MeasureEventMsg : public Message {
   public:
     void init(uint8_t msgcnt, int tempValues[4], bool batlow) {
-      Message::init(0x1a, msgcnt, 0x53, (msgcnt % 20 == 1) ? BIDI : BCAST, batlow ? 0x80 : 0x00, 0x41);
+      Message::init(0x1a, msgcnt, 0x53, (msgcnt % 20 == 1) ? (BIDI | WKMEUP) : BCAST, batlow ? 0x80 : 0x00, 0x41);
       for (int i = 0; i < 4; i++) {
         pload[i * 3] = (tempValues[i] >> 8) & 0xff;
         pload[(i * 3) + 1] = (tempValues[i]) & 0xff;
