@@ -83,7 +83,7 @@ class WeatherEventMsg : public Message {
       if ( batlow == true ) {
         t1 |= 0x80; // set bat low bit
       }
-      Message::init(0xc, msgcnt, 0x70, (msgcnt % 20 == 1) ? (BIDI | WKMEUP) : BCAST, t1, t2);
+      Message::init(0xc, msgcnt, 0x70, BIDI | WKMEUP, t1, t2);
       pload[0] = humidity;
     }
 };
@@ -115,7 +115,7 @@ class WeatherChannel : public Channel<Hal, List1, EmptyList, List4, PEERS_PER_CH
       measure();
 
       msg.init(msgcnt, bme280.temperature()+OFFSETtemp,bme280.humidity()+OFFSEThumi, device().battery().low());
-      device().sendPeerEvent(msg, *this);
+      if (msgcnt % 20 == 1) device().sendPeerEvent(msg, *this); else device().broadcastEvent(msg, *this);
     }
 
     uint32_t delay () {
