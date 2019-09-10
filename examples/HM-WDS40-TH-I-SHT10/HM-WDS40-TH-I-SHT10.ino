@@ -6,14 +6,23 @@
 // define this to read the device id, serial and device type from bootloader section
 // #define USE_OTA_BOOTLOADER
 
+#define USE_LCD
+
 #define EI_NOTEXTERNAL
 #include <EnableInterrupt.h>
 #include <AskSinPP.h>
 #include <LowPower.h>
 
 #include <MultiChannelDevice.h>
-// https://github.com/spease/Sensirion.git
-#include <Sensirion.h>
+#include <Sensirion.h>       // https://github.com/spease/Sensirion.git
+
+#ifdef USE_LCD
+#include <HT1621.h>          // https://github.com/jp112sdl/HT1621
+#define LCD_CS               5
+#define LCD_WR               6
+#define LCD_DATA             7
+#define LCD_INTERVAL_SECONDS 10
+#endif
 
 // we use a Pro Mini
 // Arduino pin for the LED
@@ -46,7 +55,7 @@ using namespace as;
 
 // define all device properties
 const struct DeviceInfo PROGMEM devinfo = {
-  {0x34, 0x56, 0x80},     // Device ID
+  {0x34, 0x56, 0xa0},     // Device ID
   "JPTH10I003",           // Device Serial
   //{0x00, 0x3d},           // Device Model Outdoor
   {0x00, 0x3f},           // Device Model Indoor
@@ -90,6 +99,45 @@ class WeatherEventMsg : public Message {
     }
 };
 
+#ifdef USE_LCD
+class LCDType : public Alarm {
+  public:
+    HT1621 ht1621 = HT1621(LCD_CS, LCD_WR, LCD_DATA);
+  private:
+    bool odd;
+    int16_t         temp;
+    uint8_t         humidity;
+  public:
+    LCDType () :  Alarm(0), odd(false), temp(0), humidity(0) {}
+    virtual ~LCDType () {}
+
+    void init() {
+      ht1621.begin();
+      ht1621.clear(4);
+      start();
+    }
+
+    void setValues(int16_t t, uint8_t h) {
+      temp = t;
+      humidity = h;
+    }
+
+    void start() {
+      sysclock.cancel(*this);
+      Alarm::set(millis2ticks(5));
+      sysclock.add(*this);
+    }
+
+    virtual void trigger (__attribute__((unused)) AlarmClock& clock) {
+      set(seconds2ticks(LCD_INTERVAL_SECONDS));
+      DPRINT("CHANGE DISPLAY "); DDECLN(odd);
+      //ht1621.printChar(odd ? String(String(humidity) + "rh").c_str() : String(String(temp) + "C").c_str());
+      sysclock.add(*this);
+      odd = !odd;
+    }
+};
+#endif
+
 class WeatherChannel : public Channel<Hal, List1, EmptyList, List4, PEERS_PER_CHANNEL, List0>, public Alarm {
 
     WeatherEventMsg msg;
@@ -98,6 +146,10 @@ class WeatherChannel : public Channel<Hal, List1, EmptyList, List4, PEERS_PER_CH
 
     Sensirion       sht10 = Sensirion(A4, A5);
     uint16_t        millis;
+
+#ifdef USE_LCD
+    LCDType         lcd;
+#endif
 
   public:
     WeatherChannel () : Channel(), Alarm(5), temp(0), humidity(0), millis(0) {}
@@ -110,12 +162,12 @@ class WeatherChannel : public Channel<Hal, List1, EmptyList, List4, PEERS_PER_CH
       uint16_t rawData;
       if ( sht10.measTemp(&rawData) == 0) {
         float t = sht10.calcTemp(rawData);
-        temp = t * 10;
+        temp = (t * 10) + OFFSETtemp;
         if ( sht10.measHumi(&rawData) == 0 ) {
-          humidity = sht10.calcHumi(rawData, t);
+          humidity = sht10.calcHumi(rawData, t) + OFFSEThumi;
         }
       }
-      DPRINT("T/H = " + String(temp+OFFSETtemp) + "/" + String(humidity+OFFSEThumi) + "\n");
+      DPRINT("T/H = " + String(temp) + "/" + String(humidity) + "\n");
     }
 
     virtual void trigger (__attribute__ ((unused)) AlarmClock& clock) {
@@ -123,9 +175,13 @@ class WeatherChannel : public Channel<Hal, List1, EmptyList, List4, PEERS_PER_CH
       // reactivate for next measure
       tick = delay();
       clock.add(*this);
-      measure();
-
-      msg.init(msgcnt, temp+OFFSETtemp, humidity+OFFSEThumi, device().battery().low());
+      //measure();
+      temp = random(400);
+      humidity = random(100);
+#ifdef USE_LCD
+      lcd.setValues(temp, humidity);
+#endif
+      msg.init(msgcnt, temp, humidity, device().battery().low());
       if (msgcnt % 20 == 1) device().sendPeerEvent(msg, *this); else device().broadcastEvent(msg, *this);
     }
 
@@ -135,6 +191,9 @@ class WeatherChannel : public Channel<Hal, List1, EmptyList, List4, PEERS_PER_CH
     void setup(Device<Hal, List0>* dev, uint8_t number, uint16_t addr) {
       Channel::setup(dev, number, addr);
       sysclock.add(*this);
+#ifdef USE_LCD
+      lcd.init();
+#endif
     }
 
     uint8_t status () const {
