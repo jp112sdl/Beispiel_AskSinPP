@@ -18,9 +18,9 @@
 
 #ifdef USE_LCD
 #include <HT1621.h>          // https://github.com/jp112sdl/HT1621
-#define LCD_CS               5
-#define LCD_WR               6
-#define LCD_DATA             7
+#define LCD_CS               3
+#define LCD_WR               7
+#define LCD_DATA             9
 #define LCD_INTERVAL_SECONDS 10
 #endif
 
@@ -100,40 +100,51 @@ class WeatherEventMsg : public Message {
 };
 
 #ifdef USE_LCD
-class LCDType : public Alarm {
+class LCD : public Alarm {
   public:
     HT1621 ht1621 = HT1621(LCD_CS, LCD_WR, LCD_DATA);
   private:
-    bool odd;
-    int16_t         temp;
+    bool            showTemperature;
+    int16_t         temperature;
     uint8_t         humidity;
   public:
-    LCDType () :  Alarm(0), odd(false), temp(0), humidity(0) {}
-    virtual ~LCDType () {}
+    LCD () :  Alarm(0), showTemperature(true), temperature(0), humidity(0) {}
+    virtual ~LCD () {}
 
     void init() {
       ht1621.begin();
-      ht1621.clear(4);
-      start();
+      ht1621.sendCommand(HT1621::BIAS_THIRD_4_COM, true, true);
+      ht1621.sendCommand(HT1621::RC256K, true, true);
+      //ht.sendCommand(HT1621::SYS_DIS, true, true);
+      //ht.sendCommand(HT1621::WDT_DIS, true, true);
+      ht1621.sendCommand(HT1621::SYS_EN, true, true);
+      ht1621.sendCommand(HT1621::LCD_ON, true, true);
+
+      ht1621.flush();
+      sysclock.add(*this);
     }
 
     void setValues(int16_t t, uint8_t h) {
-      temp = t;
+      temperature = t;
       humidity = h;
+      displayValues();
     }
 
-    void start() {
-      sysclock.cancel(*this);
-      Alarm::set(millis2ticks(5));
-      sysclock.add(*this);
+    void displayValues() {
+      if (showTemperature) {
+        ht1621.printNumber(temperature, 4, 1, 1);
+        ht1621.write(0x4, B0000100); //°C unten rechts
+      } else {
+        ht1621.printNumber(humidity, 4, 0, 1);
+        ht1621.write(0x4, B1000000); //% unten rechts
+      }
     }
 
     virtual void trigger (__attribute__((unused)) AlarmClock& clock) {
       set(seconds2ticks(LCD_INTERVAL_SECONDS));
-      DPRINT("CHANGE DISPLAY "); DDECLN(odd);
-      //ht1621.printChar(odd ? String(String(humidity) + "rh").c_str() : String(String(temp) + "C").c_str());
+      showTemperature = !showTemperature;
+      displayValues();
       sysclock.add(*this);
-      odd = !odd;
     }
 };
 #endif
@@ -148,11 +159,11 @@ class WeatherChannel : public Channel<Hal, List1, EmptyList, List4, PEERS_PER_CH
     uint16_t        millis;
 
 #ifdef USE_LCD
-    LCDType         lcd;
+    LCD             lcd;
 #endif
 
   public:
-    WeatherChannel () : Channel(), Alarm(5), temp(0), humidity(0), millis(0) {}
+    WeatherChannel () : Channel(), Alarm(2), temp(0), humidity(0), millis(0) {}
     virtual ~WeatherChannel () {}
 
 
@@ -176,7 +187,7 @@ class WeatherChannel : public Channel<Hal, List1, EmptyList, List4, PEERS_PER_CH
       tick = delay();
       clock.add(*this);
       //measure();
-      temp = random(400);
+      temp = random(1000);
       humidity = random(100);
 #ifdef USE_LCD
       lcd.setValues(temp, humidity);
