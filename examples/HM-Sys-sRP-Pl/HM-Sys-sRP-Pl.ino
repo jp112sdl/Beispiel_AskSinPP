@@ -668,8 +668,6 @@ public:
 };
 
 
-
-
 class RepeaterChannel : public Channel<Hal,List1,RepList2,EmptyList,DefList4,1,UList0> {
 private:
   struct RepeatedDevices {
@@ -766,7 +764,63 @@ class RepeaterDevice : public ChannelDevice<Hal, VirtBaseChannel<Hal, UList0>, 1
       DeviceType::registerChannel(c1, 1);
     }
     virtual ~RepeaterDevice () {}
-    RepeaterChannel& Rep1Channel () { return c1; }
+    RepeaterChannel& RepChannel () { return c1; }
+
+    void broadcastRptEvent (Message& msg, const HMID& sender) {
+      msg.clearAck();
+      msg.burstRequired(false);
+      msg.setBroadcast();
+      msg.setRepeated();
+      msg.unsetRpten();
+      msg.from(sender);
+      msg.to(HMID::broadcast);
+      send(msg);
+    }
+
+    void resendMsg(Message& msg, const HMID& sender, const HMID& receiver) {
+      msg.setRepeated();
+      msg.unsetRpten();
+      msg.from(sender);
+      msg.to(receiver);
+      msg.setRpten();
+      send(msg);
+    }
+
+    virtual bool process(Message& msg) {
+
+      if ((msg.flags() & Message::RPTEN) && !(msg.flags() & Message::RPTED)) {
+        HMID msgSender = msg.from();
+        HMID msgReceiver = msg.to();
+        bool found = false;
+        bool bcast = false;
+        for (uint8_t i = 0; i < 36; i++) {
+          if (RepChannel().rDevs[i].Sender == msgSender) {
+            found = true;
+            bcast = RepChannel().rDevs[i].BCAST;
+            break;
+          }
+        }
+
+        if (found) {
+          _delay_ms(10);
+          //DPRINT("found device, bcast is ");DDECLN(bcast);
+          if (bcast) {
+            if (msg.flags() & Message::BCAST) {
+              DPRINT(F("Repeating BCAST Message: "));
+              broadcastRptEvent(msg, msgSender);
+            } else return ChannelDevice::process(msg);
+          } else {
+            DPRINT(F("Repeating BIDI Message: "));
+            resendMsg(msg, msgSender, msgReceiver);
+          }
+          //msg.dump();
+          return true;
+        }
+
+      }
+      //nothing for us to do - run main msg processing
+      return ChannelDevice::process(msg);
+    }
 };
 
 RepeaterDevice sdev(devinfo, 0x20);
@@ -777,7 +831,7 @@ void setup () {
   sdev.init(hal);
   buttonISR(cfgBtn, CONFIG_BUTTON_PIN);
   sdev.initDone();
-  sdev.Rep1Channel().changed(true);
+  //sdev.RepChannel().changed(true);
 }
 
 void loop() {
