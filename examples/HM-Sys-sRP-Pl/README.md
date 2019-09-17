@@ -1,5 +1,9 @@
 # WIP
 
-:white_check_mark: save sender/receiver addresses in List2<br/>
-:white_check_mark: repeat BCAST messages<br/>
-:white_check_mark: repeat BIDI messages
+### :white_check_mark: DONE
+- save sender/receiver addresses in List2<br/>
+- repeat BCAST messages<br/>
+- repeat BIDI messages<br/>
+
+### :x: TODO
+- send ACK to sender <br/>
