@@ -766,12 +766,18 @@ class RepeaterDevice : public ChannelDevice<Hal, VirtBaseChannel<Hal, UList0>, 1
     virtual ~RepeaterDevice () {}
     RepeaterChannel& RepChannel () { return c1; }
 
+    void unsetRptEn(Message& msg) {
+      uint8_t f = msg.flags();
+      f -= Message::RPTEN;
+      msg.flags(f);
+    }
+
     void broadcastRptEvent (Message& msg, const HMID& sender) {
       msg.clearAck();
       msg.burstRequired(false);
       msg.setBroadcast();
       msg.setRepeated();
-      msg.unsetRpten();
+      unsetRptEn(msg);
       msg.from(sender);
       msg.to(HMID::broadcast);
       send(msg);
@@ -783,7 +789,7 @@ class RepeaterDevice : public ChannelDevice<Hal, VirtBaseChannel<Hal, UList0>, 1
         kstore.addAuth(msg);
       }
       msg.setRepeated();
-      msg.unsetRpten();
+      unsetRptEn(msg);
       msg.from(sender);
       msg.to(receiver);
       send(msg);
