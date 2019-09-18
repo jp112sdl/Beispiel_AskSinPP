@@ -671,8 +671,8 @@ public:
 class RepeaterChannel : public Channel<Hal,List1,RepList2,EmptyList,DefList4,1,UList0> {
 private:
   struct RepeaterPartner {
-    HMID Sender;
-    HMID Receiver;
+    HMID P1;
+    HMID P2;
     bool BCAST;
   };
 public:
@@ -696,10 +696,10 @@ public:
       if (i < 9) DPRINT("0");
       DDEC(i+1);
       DPRINT(": ");
-      RepeaterPartnerDevices[i].Sender.dump();
-      DPRINT(" -> ");
-      RepeaterPartnerDevices[i].Receiver.dump();
-      DPRINT(" B: ");
+      RepeaterPartnerDevices[i].P1.dump();
+      DPRINT(" ");
+      RepeaterPartnerDevices[i].P2.dump();
+      DPRINT(" ");
 
       if (i % 2 == 1)
         DDECLN(RepeaterPartnerDevices[i].BCAST);
@@ -777,12 +777,15 @@ class RepeaterDevice : public ChannelDevice<Hal, VirtBaseChannel<Hal, UList0>, 1
       send(msg);
     }
 
-    void resendMsg(Message& msg, const HMID& sender, const HMID& receiver) {
+    void resendBidiMsg(Message& msg, const HMID& sender, const HMID& receiver, bool ack) {
+      if (ack) {
+        msg.ack().init(0);
+        kstore.addAuth(msg);
+      }
       msg.setRepeated();
       msg.unsetRpten();
       msg.from(sender);
       msg.to(receiver);
-      msg.setRpten();
       send(msg);
     }
 
@@ -794,7 +797,7 @@ class RepeaterDevice : public ChannelDevice<Hal, VirtBaseChannel<Hal, UList0>, 1
         bool found = false;
         bool bcast = false;
         for (uint8_t i = 0; i < 36; i++) {
-          if (RepChannel().RepeaterPartnerDevices[i].Sender == msgSender) {
+          if (RepChannel().RepeaterPartnerDevices[i].P1 == msgSender || RepChannel().RepeaterPartnerDevices[i].P2 == msgSender) {
             found = true;
             bcast = RepChannel().RepeaterPartnerDevices[i].BCAST;
             break;
@@ -802,16 +805,20 @@ class RepeaterDevice : public ChannelDevice<Hal, VirtBaseChannel<Hal, UList0>, 1
         }
 
         if (found) {
-          _delay_ms(10);
-          //DPRINT("found device, bcast is ");DDECLN(bcast);
-          if (bcast) {
-            if (msg.flags() & Message::BCAST) {
+          _delay_ms(5);
+          if (msg.flags() & Message::BCAST) {
+            if (bcast) {
               DPRINT(F("Repeating BCAST Message: "));
               broadcastRptEvent(msg, msgSender);
             } else return ChannelDevice::process(msg);
           } else {
-            DPRINT(F("Repeating BIDI Message: "));
-            resendMsg(msg, msgSender, msgReceiver);
+            if (msg.ackRequired()) {
+              DPRINT(F("Repeating  ACK Message: "));
+              resendBidiMsg(msg, msgSender, msgReceiver, true);
+            } else {
+              DPRINT(F("Repeating BIDI Message: "));
+              resendBidiMsg(msg, msgSender, msgReceiver, false);
+            }
           }
           //msg.dump();
           return true;
