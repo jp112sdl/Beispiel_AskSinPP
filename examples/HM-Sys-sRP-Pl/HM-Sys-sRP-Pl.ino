@@ -790,14 +790,18 @@ class RepeaterDevice : public ChannelDevice<Hal, VirtBaseChannel<Hal, UList0>, 1
     }
 
     virtual bool process(Message& msg) {
+      HMID me;
+      getDeviceID(me);
 
-      if ((msg.flags() & Message::RPTEN) && !(msg.flags() & Message::RPTED)) {
-        HMID msgSender = msg.from();
-        HMID msgReceiver = msg.to();
+      if (msg.from() != me &&
+          msg.to()   != me &&
+         (msg.flags() & Message::RPTEN) &&
+        !(msg.flags() & Message::RPTED)) {
         bool found = false;
         bool bcast = false;
+
         for (uint8_t i = 0; i < 36; i++) {
-          if (RepChannel().RepeaterPartnerDevices[i].P1 == msgSender || RepChannel().RepeaterPartnerDevices[i].P2 == msgSender) {
+          if (RepChannel().RepeaterPartnerDevices[i].P1 == msg.from() || RepChannel().RepeaterPartnerDevices[i].P1 == msg.to()) {
             found = true;
             bcast = RepChannel().RepeaterPartnerDevices[i].BCAST;
             break;
@@ -809,15 +813,15 @@ class RepeaterDevice : public ChannelDevice<Hal, VirtBaseChannel<Hal, UList0>, 1
           if (msg.flags() & Message::BCAST) {
             if (bcast) {
               DPRINT(F("Repeating BCAST Message: "));
-              broadcastRptEvent(msg, msgSender);
+              broadcastRptEvent(msg, msg.from());
             } else return ChannelDevice::process(msg);
           } else {
             if (msg.ackRequired()) {
               DPRINT(F("Repeating  ACK Message: "));
-              resendBidiMsg(msg, msgSender, msgReceiver, true);
+              resendBidiMsg(msg, msg.from(), msg.to(), true);
             } else {
               DPRINT(F("Repeating BIDI Message: "));
-              resendBidiMsg(msg, msgSender, msgReceiver, false);
+              resendBidiMsg(msg, msg.from(), msg.to(), false);
             }
           }
           //msg.dump();
