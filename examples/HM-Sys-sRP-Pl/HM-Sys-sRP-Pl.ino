@@ -793,6 +793,7 @@ class RepeaterDevice : public ChannelDevice<Hal, VirtBaseChannel<Hal, UList0>, 1
       HMID me;
       getDeviceID(me);
 
+      //Message is not from/for myself , was not repeated (! RPTED) and has repeating enabled (RPTEN)
       if (msg.from() != me &&
           msg.to()   != me &&
          (msg.flags() & Message::RPTEN) &&
@@ -800,6 +801,7 @@ class RepeaterDevice : public ChannelDevice<Hal, VirtBaseChannel<Hal, UList0>, 1
         bool found = false;
         bool bcast = false;
 
+        //look in RepeaterPartnerDevices, if Message is from/for any of them
         for (uint8_t i = 0; i < 36; i++) {
           if (RepChannel().RepeaterPartnerDevices[i].P1 == msg.from() || RepChannel().RepeaterPartnerDevices[i].P1 == msg.to()) {
             found = true;
@@ -808,6 +810,7 @@ class RepeaterDevice : public ChannelDevice<Hal, VirtBaseChannel<Hal, UList0>, 1
           }
         }
 
+        //a device was found in RepeaterPartnerDevices
         if (found) {
           _delay_ms(5);
           if (msg.flags() & Message::BCAST) {
