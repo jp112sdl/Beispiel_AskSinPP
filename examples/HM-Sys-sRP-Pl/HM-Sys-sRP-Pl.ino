@@ -18,7 +18,7 @@ using namespace as;
 
 const struct DeviceInfo PROGMEM devinfo = {
   {0x00, 0x76, 0x01},     // Device ID
-  "REPEATER 01",           // Device Serial
+  "REPEATER01",           // Device Serial
   {0x00, 0x76},           // Device Model
   0x10,                   // Firmware Version
   0x40,                   // Device Type
