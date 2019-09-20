@@ -18,7 +18,7 @@ using namespace as;
 
 const struct DeviceInfo PROGMEM devinfo = {
   {0x00, 0x76, 0x01},     // Device ID
-  "REP0000001",           // Device Serial
+  "REPEATER 01",           // Device Serial
   {0x00, 0x76},           // Device Model
   0x10,                   // Firmware Version
   0x40,                   // Device Type
@@ -671,8 +671,8 @@ public:
 class RepeaterChannel : public Channel<Hal,List1,RepList2,EmptyList,DefList4,1,UList0> {
 private:
   struct RepeaterPartner {
-    HMID P1;
-    HMID P2;
+    HMID SENDER;
+    HMID RECEIVER;
     bool BCAST;
   };
 public:
@@ -696,9 +696,9 @@ public:
       if (i < 9) DPRINT("0");
       DDEC(i+1);
       DPRINT(": ");
-      RepeaterPartnerDevices[i].P1.dump();
+      RepeaterPartnerDevices[i].SENDER.dump();
       DPRINT(" ");
-      RepeaterPartnerDevices[i].P2.dump();
+      RepeaterPartnerDevices[i].RECEIVER.dump();
       DPRINT(" ");
 
       if (i % 2 == 1)
@@ -807,9 +807,20 @@ class RepeaterDevice : public ChannelDevice<Hal, VirtBaseChannel<Hal, UList0>, 1
         bool found = false;
         bool bcast = false;
 
+        HMID SENDER;
+        HMID RECEIVER;
+
         //look in RepeaterPartnerDevices, if Message is from/for any of them
         for (uint8_t i = 0; i < 36; i++) {
-          if (RepChannel().RepeaterPartnerDevices[i].P1 == msg.from() || RepChannel().RepeaterPartnerDevices[i].P1 == msg.to()) {
+          if (
+               (
+                ( RepChannel().RepeaterPartnerDevices[i].SENDER   == msg.from() && RepChannel().RepeaterPartnerDevices[i].RECEIVER == msg.to() ) ||
+                ( RepChannel().RepeaterPartnerDevices[i].RECEIVER == msg.from() && RepChannel().RepeaterPartnerDevices[i].SENDER   == msg.to() ) ||
+                ( RepChannel().RepeaterPartnerDevices[i].SENDER   == msg.from() && RepChannel().RepeaterPartnerDevices[i].RECEIVER == HMID::broadcast && (msg.flags() & Message::BCAST))
+               )
+              ) {
+            SENDER   = RepChannel().RepeaterPartnerDevices[i].SENDER;
+            RECEIVER = RepChannel().RepeaterPartnerDevices[i].RECEIVER;
             found = true;
             bcast = RepChannel().RepeaterPartnerDevices[i].BCAST;
             break;
@@ -818,18 +829,18 @@ class RepeaterDevice : public ChannelDevice<Hal, VirtBaseChannel<Hal, UList0>, 1
 
         //a device was found in RepeaterPartnerDevices
         if (found) {
-          _delay_ms(5);
+          _delay_ms(10);
           if (msg.flags() & Message::BCAST) {
             if (bcast) {
               DPRINT(F("Repeating BCAST Message: "));
               broadcastRptEvent(msg, msg.from());
             } else return ChannelDevice::process(msg);
           } else {
-            if (msg.ackRequired()) {
-              DPRINT(F("Repeating  ACK Message: "));
+            if (msg.isAck() && (msg.from() == SENDER)) {
+              DPRINT(F("Repeating   ACK Message: "));
               resendBidiMsg(msg, msg.from(), msg.to(), true);
             } else {
-              DPRINT(F("Repeating BIDI Message: "));
+              DPRINT(F("Repeating  BIDI Message: "));
               resendBidiMsg(msg, msg.from(), msg.to(), false);
             }
           }
