@@ -24,7 +24,7 @@ const struct DeviceInfo PROGMEM devinfo = {
   0x40,                   // Device Type
   {0x01, 0x00}            // Info Bytes
 };
-typedef AskSin<StatusLed<4>, NoBattery, Radio<AvrSPI<10, 11, 12, 13>, 2>> Hal;
+typedef AskSin<StatusLed<4>, NoBattery, Radio<AvrSPI<10, 11, 12, 13>, 2, 0>> Hal;
 Hal hal;
 
 DEFREGISTER(UReg0, MASTERID_REGS, DREG_COMPATIBILITY_MODE)
@@ -783,11 +783,7 @@ class RepeaterDevice : public ChannelDevice<Hal, VirtBaseChannel<Hal, UList0>, 1
       send(msg);
     }
 
-    void resendBidiMsg(Message& msg, const HMID& sender, const HMID& receiver, bool ack) {
-      if (ack) {
-        msg.ack().init(0);
-        kstore.addAuth(msg);
-      }
+    void resendBidiMsg(Message& msg, const HMID& sender, const HMID& receiver) {
       msg.setRepeated();
       unsetRptEn(msg);
       msg.from(sender);
@@ -804,11 +800,8 @@ class RepeaterDevice : public ChannelDevice<Hal, VirtBaseChannel<Hal, UList0>, 1
           msg.to()   != me &&
          (msg.flags() & Message::RPTEN) &&
         !(msg.flags() & Message::RPTED)) {
-        bool found = false;
-        bool bcast = false;
 
-        HMID SENDER;
-        HMID RECEIVER;
+        uint8_t partnerIdx = 255;
 
         //look in RepeaterPartnerDevices, if Message is from/for any of them
         for (uint8_t i = 0; i < 36; i++) {
@@ -816,33 +809,25 @@ class RepeaterDevice : public ChannelDevice<Hal, VirtBaseChannel<Hal, UList0>, 1
                (
                 ( RepChannel().RepeaterPartnerDevices[i].SENDER   == msg.from() && RepChannel().RepeaterPartnerDevices[i].RECEIVER == msg.to() ) ||
                 ( RepChannel().RepeaterPartnerDevices[i].RECEIVER == msg.from() && RepChannel().RepeaterPartnerDevices[i].SENDER   == msg.to() ) ||
-                ( RepChannel().RepeaterPartnerDevices[i].SENDER   == msg.from() && RepChannel().RepeaterPartnerDevices[i].RECEIVER == HMID::broadcast && (msg.flags() & Message::BCAST))
+                ( RepChannel().RepeaterPartnerDevices[i].SENDER   == msg.from() && (msg.flags() & Message::BCAST) )
                )
               ) {
-            SENDER   = RepChannel().RepeaterPartnerDevices[i].SENDER;
-            RECEIVER = RepChannel().RepeaterPartnerDevices[i].RECEIVER;
-            found = true;
-            bcast = RepChannel().RepeaterPartnerDevices[i].BCAST;
+            partnerIdx = i;
             break;
           }
         }
 
         //a device was found in RepeaterPartnerDevices
-        if (found) {
-          _delay_ms(10);
+        if (partnerIdx < 255) {
+          //_delay_ms(10);
           if (msg.flags() & Message::BCAST) {
-            if (bcast) {
+            if (RepChannel().RepeaterPartnerDevices[partnerIdx].BCAST) {
               DPRINT(F("Repeating BCAST Message: "));
               broadcastRptEvent(msg, msg.from());
             } else return ChannelDevice::process(msg);
           } else {
-            if (msg.isAck() && (msg.from() == SENDER)) {
-              DPRINT(F("Repeating   ACK Message: "));
-              resendBidiMsg(msg, msg.from(), msg.to(), true);
-            } else {
-              DPRINT(F("Repeating  BIDI Message: "));
-              resendBidiMsg(msg, msg.from(), msg.to(), false);
-            }
+            DPRINT(F("Repeating  BIDI Message: "));
+            resendBidiMsg(msg, msg.from(), msg.to());
           }
           //msg.dump();
           return true;
