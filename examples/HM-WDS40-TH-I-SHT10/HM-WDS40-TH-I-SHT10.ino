@@ -17,7 +17,7 @@
 #include <Sensirion.h>       // https://github.com/spease/Sensirion.git
 
 #ifdef USE_LCD
-#include <HT1621.h>          // https://github.com/jp112sdl/HT1621
+#include "lcd.h"
 #define LCD_CS               3
 #define LCD_WR               7
 #define LCD_DATA             9
@@ -102,7 +102,7 @@ class WeatherEventMsg : public Message {
 #ifdef USE_LCD
 class LCD : public Alarm {
   public:
-    HT1621 ht1621 = HT1621(LCD_CS, LCD_WR, LCD_DATA);
+    Lcd lcd;
   private:
     bool            showTemperature;
     int16_t         temperature;
@@ -112,15 +112,8 @@ class LCD : public Alarm {
     virtual ~LCD () {}
 
     void init() {
-      ht1621.begin();
-      ht1621.sendCommand(HT1621::BIAS_THIRD_4_COM, true, true);
-      ht1621.sendCommand(HT1621::RC256K, true, true);
-      //ht.sendCommand(HT1621::SYS_DIS, true, true);
-      //ht.sendCommand(HT1621::WDT_DIS, true, true);
-      ht1621.sendCommand(HT1621::SYS_EN, true, true);
-      ht1621.sendCommand(HT1621::LCD_ON, true, true);
-
-      ht1621.flush();
+      lcd.begin(LCD_CS, LCD_WR, LCD_DATA);
+      lcd.clear();
       sysclock.add(*this);
     }
 
@@ -132,11 +125,9 @@ class LCD : public Alarm {
 
     void displayValues() {
       if (showTemperature) {
-        ht1621.printNumber(temperature, 4, 1, 1);
-        ht1621.write(0x4, B0000100); //°C unten rechts
+        lcd.printC(temperature / 10.0);
       } else {
-        ht1621.printNumber(humidity, 4, 0, 1);
-        ht1621.write(0x4, B1000000); //% unten rechts
+        lcd.print(humidity);
       }
     }
 
