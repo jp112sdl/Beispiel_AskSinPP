@@ -6,7 +6,7 @@
 // define this to read the device id, serial and device type from bootloader section
 // #define USE_OTA_BOOTLOADER
 
-#define USE_LCD
+//#define USE_LCD             //bei Verwendung des LCD Displays https://www.aliexpress.com/item/1435066364.html
 
 #define EI_NOTEXTERNAL
 #include <EnableInterrupt.h>
@@ -177,9 +177,7 @@ class WeatherChannel : public Channel<Hal, List1, EmptyList, List4, PEERS_PER_CH
       // reactivate for next measure
       tick = delay();
       clock.add(*this);
-      //measure();
-      temp = random(1000);
-      humidity = random(100);
+      measure();
 #ifdef USE_LCD
       lcd.setValues(temp, humidity);
 #endif
