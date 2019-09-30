@@ -83,49 +83,22 @@ void Lcd::clear(){
 }
 
 //diplay integer number.
-void Lcd::print(long number){
-  //check the condition.
-  if (number > 9999){
-    number = 9999;
-  }
-  if (number < -999){
-    number = -999;
+void Lcd::printH(uint8_t number){
+
+  if (number > 99){
+    number = 99;
   }
 
-  snprintf(localBuffer, 5, "%4li", number); //convert to char.
+  //snprintf(localBuffer, 5, "%4li", number); //convert to char.
+  dtostrf(number,5,number < 10 ? 2:3,localBuffer);//convert to string
 
   update(1);
 }
-//display Floating number.
-void Lcd::printFloat(float number){
-  //check the condition
-  if(number > 99.99){
-    number = 99.99;
-  }
-  if(number < -9.99){
-    number = -9.99;
-  }
-
-  dtostrf(number,5,2,localBuffer);//convert to string
-
-  //find dot position
-  for (int i =0; i<4;i++){
-    if(localBuffer[i] == '.'){
-      _dotPosVal = i;
-    }
-  }
-
-  //remove "." from string
-  for (int i =_dotPosVal; i< 5; i ++){
-    localBuffer[i] = localBuffer[i+1];
-  }
-
-  update(2);
-}
 
 //display temperature in C
-void Lcd::printC(float number){
-  dtostrf(number,5,3,localBuffer);//convert to string
+void Lcd::printC(int16_t number){
+
+  dtostrf((number / 10.0),5,3,localBuffer);//convert to string
 
   //find dot position
   for (int i =0; i<4;i++){
@@ -138,7 +111,7 @@ void Lcd::printC(float number){
   for (int i =_dotPosVal; i< 5; i ++){
     localBuffer[i] = localBuffer[i+1];
   }
-  update(4);
+  update(2);
 }
 
 //update the LCD segment
@@ -152,62 +125,50 @@ void Lcd::update(int type){
   for (int i = 0 ; i < 4; i ++){
     switch(localBuffer[i]){
       case '0':
-      dispNumArray[i] = 0xFC;
+      dispNumArray[i] = 0xFC; // 11111100
       break;
       case '1':
-      dispNumArray[i] = 0x60;
+      dispNumArray[i] = 0x60; // 01100000
       break;
       case '2':
-      dispNumArray[i] = 0xDA;
+      dispNumArray[i] = 0xDA; // 11011010
       break;
       case '3':
-      dispNumArray[i] = 0xF2;
+      dispNumArray[i] = 0xF2; // 11110010
       break;
       case '4':
-      dispNumArray[i] = 0x66;
+      dispNumArray[i] = 0x66; // 01100110
       break;
       case '5':
-      dispNumArray[i] = 0xB6;
+      dispNumArray[i] = 0xB6; // 10110110
       break;
       case '6':
-      dispNumArray[i] = 0xBE;
+      dispNumArray[i] = 0xBE; // 10111110
       break;
       case '7':
-      dispNumArray[i] = 0xE0;
+      dispNumArray[i] = 0xE0; // 11100000
       break;
       case '8':
-      dispNumArray[i] = 0xFE;
+      dispNumArray[i] = 0xFE; // 11111110
       break;
       case '9':
-      dispNumArray[i] = 0xF6;
+      dispNumArray[i] = 0xF6; // 11110110
       break;
       case '-':
-      dispNumArray[i] = 0x02;
+      dispNumArray[i] = 0x02; // 00000010
       break;
     }
   }
 
   switch (type){
-    case 1: //for integer number
-      //nothing to do in this block when number is integer.
-      break;
+    case 1: //for humidity
+      dispNumArray[2] = 0x0A; // r
+      dispNumArray[3] = 0x6E; // H
+    break;
 
-    case 2: //for floating number
-      dispNumArray[_dotPosVal-1] |= 0x01;
-      break;
-
-    case 3: //for time format
-      dispNumArray[1] |= 0x01;
-      dispNumArray[2] |= 0x01;
-      break;
-
-    case 4: //for temp C format
+    case 2: //for temp C format
       dispNumArray[_dotPosVal-1] |= 0x01;
       dispNumArray[3] = 0x9D; //print *C
-      break;
-
-    case 5:
-      dispNumArray[3] = 0x8F; //print *F
       break;
   }
 

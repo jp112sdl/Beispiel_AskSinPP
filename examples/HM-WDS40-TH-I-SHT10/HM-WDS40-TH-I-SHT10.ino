@@ -6,7 +6,7 @@
 // define this to read the device id, serial and device type from bootloader section
 // #define USE_OTA_BOOTLOADER
 
-//#define USE_LCD             //bei Verwendung des LCD Displays https://www.aliexpress.com/item/1435066364.html
+// #define USE_LCD             //bei Verwendung des LCD Displays https://www.aliexpress.com/item/1435066364.html
 
 #define EI_NOTEXTERNAL
 #include <EnableInterrupt.h>
@@ -125,9 +125,9 @@ class LCD : public Alarm {
 
     void displayValues() {
       if (showTemperature) {
-        lcd.printC(temperature / 10.0);
+        lcd.printC(temperature);
       } else {
-        lcd.print(humidity);
+        lcd.printH(humidity);
       }
     }
 

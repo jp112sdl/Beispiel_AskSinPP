@@ -6,9 +6,8 @@ public:
   //public functions
   void begin(int csPin, int wrPin, int dataPin); //initiate the LCD
   void clear(); //Clear all number on LCD
-  void print(long number); //diplay integer number
-  void printFloat(float number); //display floating number
-  void printC(float number); //display the temperature in C with floating number
+  void printH(uint8_t number); //diplay integer number
+  void printC(int16_t number); //display the temperature in C with floating number
 
 private:
   //private functions
