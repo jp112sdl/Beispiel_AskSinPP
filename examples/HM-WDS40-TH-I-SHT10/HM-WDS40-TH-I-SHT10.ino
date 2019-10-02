@@ -1,6 +1,7 @@
 //- -----------------------------------------------------------------------------------------------------------------------
 // AskSin++
 // 2016-10-31 papa Creative Commons - http://creativecommons.org/licenses/by-nc-sa/3.0/de/
+// 2019-10-02 jp112sdl Creative Commons - http://creativecommons.org/licenses/by-nc-sa/3.0/de/
 //- -----------------------------------------------------------------------------------------------------------------------
 
 // define this to read the device id, serial and device type from bootloader section
@@ -104,11 +105,12 @@ class LCD : public Alarm {
   public:
     Lcd lcd;
   private:
-    bool            showTemperature;
+    uint8_t         screenNum;
     int16_t         temperature;
     uint8_t         humidity;
+    bool            batlow;
   public:
-    LCD () :  Alarm(0), showTemperature(true), temperature(0), humidity(0) {}
+    LCD () :  Alarm(0), screenNum(0), temperature(0), humidity(0), batlow(false) {}
     virtual ~LCD () {}
 
     void init() {
@@ -117,23 +119,31 @@ class LCD : public Alarm {
       sysclock.add(*this);
     }
 
-    void setValues(int16_t t, uint8_t h) {
+    void setValues(int16_t t, uint8_t h, bool b) {
       temperature = t;
       humidity = h;
+      batlow = b;
       displayValues();
     }
 
     void displayValues() {
-      if (showTemperature) {
-        lcd.printC(temperature);
-      } else {
+      switch (screenNum) {
+      case 0:
         lcd.printH(humidity);
+        break;
+      case 1:
+        lcd.printC(temperature);
+        break;
+      case 2:
+        lcd.printLowBat();
+        break;
       }
+      screenNum++;
+      if (screenNum > (batlow ?  2 : 1)) screenNum = 0;
     }
 
     virtual void trigger (__attribute__((unused)) AlarmClock& clock) {
       set(seconds2ticks(LCD_INTERVAL_SECONDS));
-      showTemperature = !showTemperature;
       displayValues();
       sysclock.add(*this);
     }
@@ -179,7 +189,7 @@ class WeatherChannel : public Channel<Hal, List1, EmptyList, List4, PEERS_PER_CH
       clock.add(*this);
       measure();
 #ifdef USE_LCD
-      lcd.setValues(temp, humidity);
+      lcd.setValues(temp, humidity, device().battery().low());
 #endif
       msg.init(msgcnt, temp, humidity, device().battery().low());
       if (msgcnt % 20 == 1) device().sendPeerEvent(msg, *this); else device().broadcastEvent(msg, *this);

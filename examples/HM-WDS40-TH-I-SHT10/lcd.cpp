@@ -114,6 +114,10 @@ void Lcd::printC(int16_t number){
   update(2);
 }
 
+void Lcd::printLowBat() {
+  update(3);
+}
+
 //update the LCD segment
 void Lcd::update(int type){
   //clear array
@@ -124,52 +128,71 @@ void Lcd::update(int type){
   //maping number to lcd segment.
   for (int i = 0 ; i < 4; i ++){
     switch(localBuffer[i]){
+    /* segments bitorder
+    *       a
+    *       -
+    *    f | | b
+    *       -  <-g
+    *    e | | c
+    *       - . <-h
+    *       d
+    *
+    *   a b c d e f g h
+    */
+
       case '0':
-      dispNumArray[i] = 0xFC; // 11111100
+      dispNumArray[i] = 0b11111100;
       break;
       case '1':
-      dispNumArray[i] = 0x60; // 01100000
+      dispNumArray[i] = 0b01100000;
       break;
       case '2':
-      dispNumArray[i] = 0xDA; // 11011010
+      dispNumArray[i] = 0b11011010;
       break;
       case '3':
-      dispNumArray[i] = 0xF2; // 11110010
+      dispNumArray[i] = 0b11110010;
       break;
       case '4':
-      dispNumArray[i] = 0x66; // 01100110
+      dispNumArray[i] = 0b01100110;
       break;
       case '5':
-      dispNumArray[i] = 0xB6; // 10110110
+      dispNumArray[i] = 0b10110110;
       break;
       case '6':
-      dispNumArray[i] = 0xBE; // 10111110
+      dispNumArray[i] = 0b10111110;
       break;
       case '7':
-      dispNumArray[i] = 0xE0; // 11100000
+      dispNumArray[i] = 0b11100000;
       break;
       case '8':
-      dispNumArray[i] = 0xFE; // 11111110
+      dispNumArray[i] = 0b11111110;
       break;
       case '9':
-      dispNumArray[i] = 0xF6; // 11110110
+      dispNumArray[i] = 0b11110110;
       break;
       case '-':
-      dispNumArray[i] = 0x02; // 00000010
+      dispNumArray[i] = 0b00000010;
       break;
     }
   }
 
   switch (type){
     case 1: //for humidity
-      dispNumArray[2] = 0x0A; // r
-      dispNumArray[3] = 0x6E; // H
+      dispNumArray[2] = 0b00001010; // r
+      dispNumArray[3] = 0b01101110; // H
     break;
 
     case 2: //for temp C format
-      dispNumArray[_dotPosVal-1] |= 0x01;
-      dispNumArray[3] = 0x9D; //print *C
-      break;
+      dispNumArray[_dotPosVal-1] |= 0b00000001;
+      dispNumArray[3] = 0b10011101; //print *C
+    break;
+
+    case 3: //print b.Lo
+      dispNumArray[0] = 0b00111111; // b.
+      dispNumArray[1] = 0b00011100; // L
+      dispNumArray[2] = 0b00111010; // o
+      dispNumArray[3] = 0b00000000; //
+    break;
   }
 
   //sending 101 to inform HT1621 that MCU send data then follow by address 000000.

@@ -8,6 +8,7 @@ public:
   void clear(); //Clear all number on LCD
   void printH(uint8_t number); //diplay integer number
   void printC(int16_t number); //display the temperature in C with floating number
+  void printLowBat();
 
 private:
   //private functions
