@@ -188,14 +188,14 @@ class SensorList1 : public RegList1<SensorReg1> {
 
 class PowerEventMsg : public Message {
   public:
-    void init(uint8_t msgcnt, bool boot, uint32_t e_counter, uint32_t power, uint16_t current, uint16_t voltage, uint8_t frequency ) {
+    void init(uint8_t msgcnt, uint8_t typ, bool boot, uint32_t e_counter, uint32_t power, uint16_t current, uint16_t voltage, uint8_t frequency ) {
 
       uint8_t ec1 = (e_counter >> 16) & 0x7f;
       if (boot == true) {
         ec1 |= 0x80;
       }
 
-      Message::init(0x16, msgcnt, 0x5f, BIDI | WKMEUP, ec1, (e_counter >> 8) & 0xff);
+      Message::init(0x16, msgcnt, typ, BCAST, ec1, (e_counter >> 8) & 0xff);
       pload[0] = (e_counter) & 0xff;
       pload[1] = (power >> 16) & 0xff;
       pload[2] = (power >> 8) & 0xff;
@@ -240,8 +240,9 @@ class PowerMeterChannel : public Channel<Hal, MeasureList1, EmptyList, List4, PE
 
       if ((sendMessage || boot) && (actualValues.Voltage > 0)) {
         //DPRINTLN(F("PowerMeterChannel - SENDING MESSAGE"));
-        msg.init(device().nextcount(), boot, actualValues.E_Counter, actualValues.Power, actualValues.Current, actualValues.Voltage, actualValues.Frequency);
-        device().sendPeerEvent(msg, *this);
+        msg.init(device().nextcount(), AS_MESSAGE_POWER_EVENT, boot, actualValues.E_Counter, actualValues.Power, actualValues.Current, actualValues.Voltage, actualValues.Frequency);
+        //device().sendPeerEvent(msg, *this);
+        device().broadcastEvent(msg);
       } else {
         //DPRINTLN(F("PowerMeterChannel - no message to send"));
       }
@@ -268,7 +269,7 @@ class PowerMeterChannel : public Channel<Hal, MeasureList1, EmptyList, List4, PE
       txThresholdFrequency = this->getList1().txThresholdFrequency();    // 1 Hz   = 100
       txMindelay           = this->getList1().txMindelay();
       averaging            = this->getList1().averaging();
-      //DPRINT(F("txMindelay           = ")); DDECLN(txMindelay);
+      DPRINT(F("txMindelay           = ")); DDECLN(txMindelay);
       DPRINT(F("txThresholdPower     = ")); DDECLN(txThresholdPower);
       DPRINT(F("txThresholdCurrent   = ")); DDECLN(txThresholdCurrent);
       DPRINT(F("txThresholdVoltage   = ")); DDECLN(txThresholdVoltage);
