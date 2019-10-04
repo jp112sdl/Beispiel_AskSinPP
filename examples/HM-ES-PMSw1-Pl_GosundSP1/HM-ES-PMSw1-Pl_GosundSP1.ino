@@ -195,7 +195,7 @@ class PowerEventMsg : public Message {
         ec1 |= 0x80;
       }
 
-      Message::init(0x16, msgcnt, typ, BCAST, ec1, (e_counter >> 8) & 0xff);
+      Message::init(0x16, msgcnt, typ, (typ == AS_MESSAGE_POWER_EVENT_CYCLIC) ? BCAST : BIDI | BCAST, ec1, (e_counter >> 8) & 0xff);
       pload[0] = (e_counter) & 0xff;
       pload[1] = (power >> 16) & 0xff;
       pload[2] = (power >> 8) & 0xff;
@@ -217,34 +217,39 @@ class PowerMeterChannel : public Channel<Hal, MeasureList1, EmptyList, List4, PE
     uint8_t txThresholdFrequency;
     uint8_t txMindelay;
   public:
-    PowerMeterChannel () : Channel(), Alarm(0), boot(true), txThresholdPower(0), txThresholdCurrent(0), txThresholdVoltage(0), txThresholdFrequency(0), txMindelay(8)   {}
+    PowerMeterChannel () : Channel(), Alarm(0), boot(false), txThresholdPower(0), txThresholdCurrent(0), txThresholdVoltage(0), txThresholdFrequency(0), txMindelay(8) {}
     virtual ~PowerMeterChannel () {}
     virtual void trigger (__attribute__ ((unused)) AlarmClock& clock) {
       static uint8_t tickCount = 0;
       tick = seconds2ticks(delay());
       tickCount++;
 
-      bool sendMessage = false;
+      uint8_t msgType = 0;
 
-      if ((txThresholdCurrent > 0)   && (abs((int)(actualValues.Current   - lastValues.Current))   >= (int)txThresholdCurrent))   sendMessage = true;
-      if ((txThresholdFrequency > 0) && (abs((int)(actualValues.Frequency - lastValues.Frequency)) >= (int)txThresholdFrequency)) sendMessage = true;
-      if ((txThresholdPower > 0)     && (abs((int)(actualValues.Power     - lastValues.Power))     >= (int)txThresholdPower))     sendMessage = true;
-      if ((txThresholdVoltage > 0)   && (abs((int)(actualValues.Voltage   - lastValues.Voltage))   >= (int)txThresholdVoltage))   sendMessage = true;
-
-      if ((!sendMessage) && (actualValues.Voltage > 0) && (lastValues.Voltage == 0)) sendMessage = true;
-
-      if (tickCount > (POWERMETER_CYCLIC_INTERVAL / delay()))  {
-        sendMessage = true;
-        tickCount = 0;
+      if (tickCount > (POWERMETER_CYCLIC_INTERVAL / delay()) || boot == false)  {
+        msgType = AS_MESSAGE_POWER_EVENT_CYCLIC;
       }
 
-      if ((sendMessage || boot) && (actualValues.Voltage > 0)) {
-        //DPRINTLN(F("PowerMeterChannel - SENDING MESSAGE"));
-        msg.init(device().nextcount(), AS_MESSAGE_POWER_EVENT, boot, actualValues.E_Counter, actualValues.Power, actualValues.Current, actualValues.Voltage, actualValues.Frequency);
-        //device().sendPeerEvent(msg, *this);
-        device().broadcastEvent(msg);
-      } else {
-        //DPRINTLN(F("PowerMeterChannel - no message to send"));
+      if ((txThresholdCurrent   > 0) && (abs((int)(actualValues.Current   - lastValues.Current)  ) >= (int)txThresholdCurrent))   msgType = AS_MESSAGE_POWER_EVENT;
+      if ((txThresholdFrequency > 0) && (abs((int)(actualValues.Frequency - lastValues.Frequency)) >= (int)txThresholdFrequency)) msgType = AS_MESSAGE_POWER_EVENT;
+      if ((txThresholdPower     > 0) && (abs((int)(actualValues.Power     - lastValues.Power)    ) >= (int)txThresholdPower))     msgType = AS_MESSAGE_POWER_EVENT;
+      if ((txThresholdVoltage   > 0) && (abs((int)(actualValues.Voltage   - lastValues.Voltage)  ) >= (int)txThresholdVoltage))   msgType = AS_MESSAGE_POWER_EVENT;
+
+      if ((msgType != AS_MESSAGE_POWER_EVENT) && (actualValues.Voltage > 0) && (lastValues.Voltage == 0)) msgType = AS_MESSAGE_POWER_EVENT;
+
+      msg.init(device().nextcount(), msgType, boot, actualValues.E_Counter, actualValues.Power, actualValues.Current, actualValues.Voltage, actualValues.Frequency);
+      switch (msgType) {
+        case AS_MESSAGE_POWER_EVENT_CYCLIC:
+          DPRINTLN(F("PowerMeterChannel - SENDING CYCLIC MESSAGE"));
+          tickCount = 0;
+          device().broadcastEvent(msg);
+        break;
+        case AS_MESSAGE_POWER_EVENT:
+          if (device().getMasterID() > 0) {
+            DPRINTLN(F("PowerMeterChannel - SENDING EVENT MESSAGE"));
+            device().sendMasterEvent(msg);
+          }
+        break;
       }
 
       lastValues.Current = actualValues.Current;
@@ -253,7 +258,7 @@ class PowerMeterChannel : public Channel<Hal, MeasureList1, EmptyList, List4, PE
       lastValues.Voltage = actualValues.Voltage;
       lastValues.E_Counter = actualValues.E_Counter;
 
-      boot = false;
+      boot = true;
       sysclock.add(*this);
     }
 
