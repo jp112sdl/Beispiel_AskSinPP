@@ -33,7 +33,6 @@
 // B0 == PIN 8 on Pro Mini
 #define CONFIG_BUTTON_PIN 8
 
-
 //-----------------------------------------------------------------------------------------
 
 //Korrektur von Temperatur und Luftfeuchte
@@ -128,15 +127,15 @@ class LCD : public Alarm {
 
     void displayValues() {
       switch (screenNum) {
-      case 0:
-        lcd.printH(humidity);
-        break;
-      case 1:
-        lcd.printC(temperature);
-        break;
-      case 2:
-        lcd.printLowBat();
-        break;
+        case 0:
+          lcd.printH(humidity);
+          break;
+        case 1:
+          lcd.printC(temperature);
+          break;
+        case 2:
+          lcd.printLowBat();
+          break;
       }
       screenNum++;
       if (screenNum > (batlow ?  2 : 1)) screenNum = 0;
@@ -233,4 +232,3 @@ void loop() {
     hal.activity.savePower<Sleep<>>(hal);
   }
 }
-
