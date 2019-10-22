@@ -1,10 +1,13 @@
 //- -----------------------------------------------------------------------------------------------------------------------
 // AskSin++
 // 2016-10-31 papa Creative Commons - http://creativecommons.org/licenses/by-nc-sa/3.0/de/
+// 2019-10-02 jp112sdl Creative Commons - http://creativecommons.org/licenses/by-nc-sa/3.0/de/
 //- -----------------------------------------------------------------------------------------------------------------------
 
 // define this to read the device id, serial and device type from bootloader section
 // #define USE_OTA_BOOTLOADER
+
+// #define USE_LCD             //bei Verwendung des LCD Displays https://www.aliexpress.com/item/1435066364.html
 
 #define EI_NOTEXTERNAL
 #include <EnableInterrupt.h>
@@ -12,8 +15,15 @@
 #include <LowPower.h>
 
 #include <MultiChannelDevice.h>
-// https://github.com/spease/Sensirion.git
 #include <sensors/Bme280.h>
+
+#ifdef USE_LCD
+#include "lcd.h"
+#define LCD_CS               3
+#define LCD_WR               7
+#define LCD_DATA             9
+#define LCD_INTERVAL_SECONDS 10
+#endif
 
 // we use a Pro Mini
 // Arduino pin for the LED
@@ -88,12 +98,68 @@ class WeatherEventMsg : public Message {
     }
 };
 
+#ifdef USE_LCD
+class LCD : public Alarm {
+  public:
+    Lcd lcd;
+  private:
+    uint8_t         screenNum;
+    int16_t         temperature;
+    uint8_t         humidity;
+    bool            batlow;
+  public:
+    LCD () :  Alarm(0), screenNum(0), temperature(0), humidity(0), batlow(false) {}
+    virtual ~LCD () {}
+
+    void init() {
+      lcd.begin(LCD_CS, LCD_WR, LCD_DATA);
+      lcd.clear();
+      sysclock.add(*this);
+    }
+
+    void setValues(int16_t t, uint8_t h, bool b) {
+      temperature = t;
+      humidity = h;
+      batlow = b;
+      displayValues();
+    }
+
+    void displayValues() {
+      switch (screenNum) {
+        case 0:
+          lcd.printH(humidity);
+          break;
+        case 1:
+          lcd.printC(temperature);
+          break;
+        case 2:
+          lcd.printLowBat();
+          break;
+      }
+      screenNum++;
+      if (screenNum > (batlow ?  2 : 1)) screenNum = 0;
+    }
+
+    virtual void trigger (__attribute__((unused)) AlarmClock& clock) {
+      set(seconds2ticks(LCD_INTERVAL_SECONDS));
+      displayValues();
+      sysclock.add(*this);
+    }
+};
+#endif
+
 class WeatherChannel : public Channel<Hal, List1, EmptyList, List4, PEERS_PER_CHANNEL, List0>, public Alarm {
 
     WeatherEventMsg msg;
+    int16_t         temp;
+    uint8_t         humidity;
 
     Bme280          bme280;
     uint16_t        millis;
+
+#ifdef USE_LCD
+    LCD             lcd;
+#endif
 
   public:
     WeatherChannel () : Channel(), Alarm(5), millis(0) {}
@@ -104,7 +170,11 @@ class WeatherChannel : public Channel<Hal, List1, EmptyList, List4, PEERS_PER_CH
     void measure () {
       DPRINT("Measure...\n");
       bme280.measure();
-      DPRINT("T/H = ");DDEC(bme280.temperature()+OFFSETtemp);DPRINT("/");DDECLN(bme280.humidity()+OFFSEThumi);
+
+      temp = bme280.temperature() + OFFSETtemp;
+      humidity = bme280.humidity() + OFFSEThumi;
+
+      DPRINT("T/H = " + String(temp) + "/" + String(humidity) + "\n");
     }
 
     virtual void trigger (__attribute__ ((unused)) AlarmClock& clock) {
@@ -113,8 +183,10 @@ class WeatherChannel : public Channel<Hal, List1, EmptyList, List4, PEERS_PER_CH
       tick = delay();
       clock.add(*this);
       measure();
-
-      msg.init(msgcnt, bme280.temperature()+OFFSETtemp,bme280.humidity()+OFFSEThumi, device().battery().low());
+#ifdef USE_LCD
+      lcd.setValues(temp, humidity, device().battery().low());
+#endif
+      msg.init(msgcnt, temp, humidity, device().battery().low());
       if (msgcnt % 20 == 1) device().sendPeerEvent(msg, *this); else device().broadcastEvent(msg, *this);
     }
 
@@ -125,6 +197,9 @@ class WeatherChannel : public Channel<Hal, List1, EmptyList, List4, PEERS_PER_CH
       Channel::setup(dev, number, addr);
       bme280.init();
       sysclock.add(*this);
+#ifdef USE_LCD
+      lcd.init();
+#endif
     }
 
     uint8_t status () const {
@@ -154,4 +229,3 @@ void loop() {
     hal.activity.savePower<Sleep<>>(hal);
   }
 }
-
