@@ -18,7 +18,7 @@
 #include <Sensirion.h>       // https://github.com/spease/Sensirion.git
 
 #ifdef USE_LCD
-#include "lcd.h"
+#include "displays/Lcd4seg.h"
 #define LCD_CS               3
 #define LCD_WR               7
 #define LCD_DATA             9
@@ -86,6 +86,10 @@ class Hal : public BaseHal {
     }
 } hal;
 
+#ifdef USE_LCD
+  LCDToggleTH<LCD4SEG<LCD_CS, LCD_WR, LCD_DATA>> lcd;
+#endif
+
 class WeatherEventMsg : public Message {
   public:
     void init(uint8_t msgcnt, int16_t temp, uint8_t humidity, bool batlow) {
@@ -99,56 +103,6 @@ class WeatherEventMsg : public Message {
     }
 };
 
-#ifdef USE_LCD
-class LCD : public Alarm {
-  public:
-    Lcd lcd;
-  private:
-    uint8_t         screenNum;
-    int16_t         temperature;
-    uint8_t         humidity;
-    bool            batlow;
-  public:
-    LCD () :  Alarm(0), screenNum(0), temperature(0), humidity(0), batlow(false) {}
-    virtual ~LCD () {}
-
-    void init() {
-      lcd.begin(LCD_CS, LCD_WR, LCD_DATA);
-      lcd.clear();
-      sysclock.add(*this);
-    }
-
-    void setValues(int16_t t, uint8_t h, bool b) {
-      temperature = t;
-      humidity = h;
-      batlow = b;
-      displayValues();
-    }
-
-    void displayValues() {
-      switch (screenNum) {
-        case 0:
-          lcd.printH(humidity);
-          break;
-        case 1:
-          lcd.printC(temperature);
-          break;
-        case 2:
-          lcd.printLowBat();
-          break;
-      }
-      screenNum++;
-      if (screenNum > (batlow ?  2 : 1)) screenNum = 0;
-    }
-
-    virtual void trigger (__attribute__((unused)) AlarmClock& clock) {
-      set(seconds2ticks(LCD_INTERVAL_SECONDS));
-      displayValues();
-      sysclock.add(*this);
-    }
-};
-#endif
-
 class WeatherChannel : public Channel<Hal, List1, EmptyList, List4, PEERS_PER_CHANNEL, List0>, public Alarm {
 
     WeatherEventMsg msg;
@@ -157,10 +111,6 @@ class WeatherChannel : public Channel<Hal, List1, EmptyList, List4, PEERS_PER_CH
 
     Sensirion       sht10 = Sensirion(A4, A5);
     uint16_t        millis;
-
-#ifdef USE_LCD
-    LCD             lcd;
-#endif
 
   public:
     WeatherChannel () : Channel(), Alarm(2), temp(0), humidity(0), millis(0) {}
@@ -201,6 +151,7 @@ class WeatherChannel : public Channel<Hal, List1, EmptyList, List4, PEERS_PER_CH
       Channel::setup(dev, number, addr);
       sysclock.add(*this);
 #ifdef USE_LCD
+      lcd.setToggleTime(LCD_INTERVAL_SECONDS);
       lcd.init();
 #endif
     }

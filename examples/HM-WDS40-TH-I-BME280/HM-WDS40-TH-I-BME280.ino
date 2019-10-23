@@ -18,10 +18,10 @@
 #include <sensors/Bme280.h>
 
 #ifdef USE_LCD
-#include "lcd.h"
-#define LCD_CS               3
-#define LCD_WR               7
-#define LCD_DATA             9
+#include "displays/Lcd4seg.h"
+#define LCD_CS               6
+#define LCD_WR               3
+#define LCD_DATA             7
 #define LCD_INTERVAL_SECONDS 10
 #endif
 
@@ -55,8 +55,8 @@ using namespace as;
 
 // define all device properties
 const struct DeviceInfo PROGMEM devinfo = {
-  {0x34, 0x56, 0x81},     // Device ID
-  "JPTH10I004",           // Device Serial
+  {0x87, 0x6f, 0x99},     // Device ID
+  "JPTH10I999",           // Device Serial
   {0x00, 0x3f},           // Device Model Indoor
   0x10,                   // Firmware Version
   as::DeviceType::THSensor, // Device Type
@@ -84,6 +84,9 @@ class Hal : public BaseHal {
       return sysclock.runready() || BaseHal::runready();
     }
 } hal;
+#ifdef USE_LCD
+  LCDToggleTH<LCD4SEG<LCD_CS, LCD_WR, LCD_DATA>> lcd;
+#endif
 
 class WeatherEventMsg : public Message {
   public:
@@ -98,56 +101,6 @@ class WeatherEventMsg : public Message {
     }
 };
 
-#ifdef USE_LCD
-class LCD : public Alarm {
-  public:
-    Lcd lcd;
-  private:
-    uint8_t         screenNum;
-    int16_t         temperature;
-    uint8_t         humidity;
-    bool            batlow;
-  public:
-    LCD () :  Alarm(0), screenNum(0), temperature(0), humidity(0), batlow(false) {}
-    virtual ~LCD () {}
-
-    void init() {
-      lcd.begin(LCD_CS, LCD_WR, LCD_DATA);
-      lcd.clear();
-      sysclock.add(*this);
-    }
-
-    void setValues(int16_t t, uint8_t h, bool b) {
-      temperature = t;
-      humidity = h;
-      batlow = b;
-      displayValues();
-    }
-
-    void displayValues() {
-      switch (screenNum) {
-        case 0:
-          lcd.printH(humidity);
-          break;
-        case 1:
-          lcd.printC(temperature);
-          break;
-        case 2:
-          lcd.printLowBat();
-          break;
-      }
-      screenNum++;
-      if (screenNum > (batlow ?  2 : 1)) screenNum = 0;
-    }
-
-    virtual void trigger (__attribute__((unused)) AlarmClock& clock) {
-      set(seconds2ticks(LCD_INTERVAL_SECONDS));
-      displayValues();
-      sysclock.add(*this);
-    }
-};
-#endif
-
 class WeatherChannel : public Channel<Hal, List1, EmptyList, List4, PEERS_PER_CHANNEL, List0>, public Alarm {
 
     WeatherEventMsg msg;
@@ -157,12 +110,8 @@ class WeatherChannel : public Channel<Hal, List1, EmptyList, List4, PEERS_PER_CH
     Bme280          bme280;
     uint16_t        millis;
 
-#ifdef USE_LCD
-    LCD             lcd;
-#endif
-
   public:
-    WeatherChannel () : Channel(), Alarm(5), millis(0) {}
+    WeatherChannel () : Channel(), Alarm(5), temp(0), humidity(0), millis(0) {}
     virtual ~WeatherChannel () {}
 
 
@@ -199,6 +148,7 @@ class WeatherChannel : public Channel<Hal, List1, EmptyList, List4, PEERS_PER_CH
       sysclock.add(*this);
 #ifdef USE_LCD
       lcd.init();
+      lcd.setToggleTime(LCD_INTERVAL_SECONDS);
 #endif
     }
 
