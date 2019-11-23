@@ -63,21 +63,8 @@ const struct DeviceInfo PROGMEM devinfo = {
 typedef AvrSPI<10, 11, 12, 13> SPIType;
 typedef Radio<SPIType, 2> RadioType;
 typedef StatusLed<LED_PIN> LedType;
-typedef AskSin<LedType, BatterySensor, RadioType> BaseHal;
-class Hal : public BaseHal {
-  public:
-    void init (const HMID& id) {
-      BaseHal::init(id);
-      // measure battery every 1h
-      battery.init(seconds2ticks(60UL*60),sysclock);
-      battery.low(22);
-      battery.critical(19);
-    }
-
-    bool runready () {
-      return sysclock.runready() || BaseHal::runready();
-    }
-} hal;
+typedef AskSin<LedType, BatterySensor, RadioType> Hal;
+Hal hal;
 
 class WeatherEventMsg : public Message {
   public:
@@ -151,6 +138,7 @@ void setup () {
   DINIT(57600, ASKSIN_PLUS_PLUS_IDENTIFIER);
   sensors.begin();
   sdev.init(hal);
+  hal.initBattery(60UL * 60, 22, 19);
   buttonISR(cfgBtn, CONFIG_BUTTON_PIN);
   sdev.initDone();
 }

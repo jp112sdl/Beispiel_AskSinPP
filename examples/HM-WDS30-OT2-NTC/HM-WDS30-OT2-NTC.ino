@@ -67,22 +67,8 @@ const struct DeviceInfo PROGMEM devinfo = {
 typedef AvrSPI<10, 11, 12, 13> SPIType;
 typedef Radio<SPIType, 2> RadioType;
 typedef StatusLed<LED_PIN> LedType;
-typedef AskSin<LedType, BatterySensor, RadioType> BaseHal;
-class Hal : public BaseHal {
-  public:
-    void init (const HMID& id) {
-      BaseHal::init(id);
-
-      battery.init(seconds2ticks(60UL * 60), sysclock); //battery measure once an hour
-      battery.low(22);
-      battery.critical(18);
-    }
-
-    bool runready () {
-      return sysclock.runready() || BaseHal::runready();
-    }
-} hal;
-
+typedef AskSin<LedType, BatterySensor, RadioType> Hal;
+Hal hal;
 
 DEFREGISTER(Reg0, MASTERID_REGS, DREG_BURSTRX, DREG_TPARAMS, DREG_CYCLICINFOMSGDIS, DREG_LOCALRESETDISABLE)
 class UList0 : public RegList0<Reg0> {
@@ -192,6 +178,7 @@ ConfigButton<UType> cfgBtn(sdev);
 void setup () {
   DINIT(57600, ASKSIN_PLUS_PLUS_IDENTIFIER);
   sdev.init(hal);
+  hal.initBattery(60UL * 60, 22, 19);
   buttonISR(cfgBtn, CONFIG_BUTTON_PIN);
   sdev.initDone();
 }
@@ -206,4 +193,3 @@ void loop() {
     hal.activity.savePower<Sleep<>>(hal);
   }
 }
-
