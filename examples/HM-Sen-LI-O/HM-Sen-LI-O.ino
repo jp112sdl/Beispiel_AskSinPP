@@ -11,9 +11,16 @@
 #include <AskSinPP.h>
 #include <LowPower.h>
 #include <Register.h>
+
 //#include <sensors/Bh1750.h>
 //#include <sensors/Tsl2561.h>
 #include <sensors/Max44009.h>
+
+#define SENSOR_CLASS MAX44009<>
+//#define SENSOR_CLASS Bh1750<>
+//#define SENSOR_CLASS Tsl2561<>                   // Brücke zwischen L und GND
+//#define SENSOR_CLASS Tsl2561<TSL2561_ADDR_HIGH>  // Brücke zwischen H und GND
+//#define SENSOR_CLASS Tsl2561<TSL2561_ADDR_FLOAT> // keine Brücke gesetzt
 
 #include <MultiChannelDevice.h>
 
@@ -28,12 +35,12 @@
 // number of available peers per channel
 #define PEERS_PER_CHANNEL 6
 
-//seconds between sending messages
-byte _txMindelay = 0x08;
+#define LUX_EVENT_CYCLIC_TIME 180 //seconds to send cyclic message
+#define LUX_EVENT_CYCLIC      0x53
+#define LUX_EVENT             0x54
 
 // all library classes are placed in the namespace 'as'
 using namespace as;
-
 
 // define all device properties
 const struct DeviceInfo PROGMEM devinfo = {
@@ -93,8 +100,8 @@ class LiList1 : public RegList1<LiReg1> {
 
 class LuxEventMsg : public Message {
   public:
-    void init(uint8_t msgcnt, uint32_t lux) {
-      Message::init(0xf, msgcnt, 0x53, RPTEN | BCAST, 0x00, 0xc1);
+    void init(uint8_t msgcnt, uint32_t lux, uint8_t type) {
+      Message::init(0xf, msgcnt, type, RPTEN|WKMEUP, 0x00, 0xc1);
       pload[0] = (lux >> 24)  & 0xff;
       pload[1] = (lux >> 16) & 0xff;
       pload[2] = (lux >> 8) & 0xff;
@@ -102,34 +109,28 @@ class LuxEventMsg : public Message {
     }
 };
 
+template <class SENSOR>
 class LuxChannel : public Channel<Hal, LiList1, EmptyList, List4, PEERS_PER_CHANNEL, LiList0>, public Alarm {
 
-    LuxEventMsg   lmsg;
-    uint32_t      lux;
-    uint32_t      lux_prev;
-    uint16_t      millis;
+    LuxEventMsg lmsg;
+    uint32_t    lux;
+    uint32_t    lux_prev;
+    uint16_t    millis;
 
-    //Bh1750<>     bh1750;
-    //Tsl2561<>                   tsl2561; // Brücke zwischen L und GND
-    //Tsl2561<TSL2561_ADDR_HIGH>  tsl2561; // Brücke zwischen H und GND
-    //Tsl2561<TSL2561_ADDR_FLOAT> tsl2561; // keine Brücke gesetzt
-    MAX44009<>                  max44009;
-
-    uint8_t last_flags = 0xff;
+    SENSOR      sens;
+    uint8_t     last_flags;
+    uint8_t     cyclic_cnt;
+    uint8_t     cyclic_dis_cnt;
 
   public:
-    LuxChannel () : Channel(), Alarm(5), lux(0), lux_prev(0), millis(0) {}
+    LuxChannel () : Channel(), Alarm(5), lux(0), lux_prev(0), millis(0), last_flags(0xff), cyclic_cnt(0), cyclic_dis_cnt(0) {}
     virtual ~LuxChannel () {}
 
     // here we do the measurement
     void measure () {
       DPRINT("Measure... ");
-      //bh1750.measure();
-      //lux = bh1750.brightness();
-      //tsl2561.measure();
-      //lux = tsl2561.brightness();
-      max44009.measure();
-      lux = max44009.brightness();
+      sens.measure();
+      lux = sens.brightness();
       DDEC(lux);
       DPRINTLN(" lux");
     }
@@ -140,50 +141,68 @@ class LuxChannel : public Channel<Hal, LiList1, EmptyList, List4, PEERS_PER_CHAN
     }
 
     virtual void trigger (__attribute__ ((unused)) AlarmClock& clock) {
-      uint8_t msgcnt = device().nextcount();
+      cyclic_cnt++;
+
+      uint8_t txMindelay = max(8,this->getList1().txMindelay());
+      //DPRINT(F("TX_MINDELAY: ")); DDECLN(txMindelay);
+
       // reactivate for next measure
-      tick = delay();
+      set(seconds2ticks(txMindelay));
       clock.add(*this);
 
+      // measure brightness
       measure();
 
+      // if battery low is reached, send a message immediately
       if (last_flags != flags()) {
         this->changed(true);
         last_flags = flags();
       }
 
-      bool sendMsg = true;
+      bool sendMsg = false;
+
+      uint8_t msgType = LUX_EVENT_CYCLIC;
+
+      // send message as LUX_EVENT, but every 3 minutes as LUX_EVENT_CYCLIC
+      uint8_t cyclicInfoMsgDis = device().getList0().cyclicInfoMsgDis();
+      if (cyclic_cnt * txMindelay >= LUX_EVENT_CYCLIC_TIME) {
+
+        if (cyclicInfoMsgDis == 0 || cyclic_dis_cnt >= cyclicInfoMsgDis) {
+          sendMsg = true;
+          cyclic_dis_cnt = 0;
+        } else {
+          cyclic_dis_cnt++;
+        }
+
+        cyclic_cnt = 0;
+      }
+
+      // check if lux is above/below threshold (if configured)
       uint8_t txThresholdPercent = this->getList1().txThresholdPercent();
+      DPRINT(F("thresholdPcnt pcnt: "));DDECLN(txThresholdPercent);
       if (txThresholdPercent > 0) {  // a threshold is configured
-        uint8_t pcnt = (lux > 0) ? min(abs(100L / (lux_prev / lux) - 100), 100) : 0;
-        DPRINT(F("thresholdPcnt pcnt: "));DDECLN(txThresholdPercent);
+        uint8_t pcnt = (lux > 0) ? min(abs(100.0 / (lux_prev) * lux - 100), 100) : 0;
         DPRINT(F("lux changed   pcnt: "));DDECLN(pcnt);
         if (pcnt >= txThresholdPercent) { // the calculated percentage between lux_prev and lux is greater or equal to the configured txThresholdPercent
           lux_prev = lux;                 // save the current lux in lux_prev
-        } else {
-          sendMsg = false;                // otherwise do not send messager
+          sendMsg = true;
+          msgType = LUX_EVENT;
         }
       }
 
       if (sendMsg == true) {
-        lmsg.init(msgcnt, lux * 100);
-        device().broadcastEvent(lmsg, *this);
+        lmsg.init(device().nextcount(), lux * 100, msgType);
+        if (msgType == LUX_EVENT_CYCLIC)
+          device().broadcastEvent(lmsg, *this);
+        else
+          device().sendPeerEvent(lmsg, *this);
       }
-    }
-
-    uint32_t delay () {
-      _txMindelay = this->getList1().txMindelay();
-      DPRINT("TX Delay = ");
-      DDECLN(_txMindelay);
-      return seconds2ticks(_txMindelay);
     }
 
     void setup(Device<Hal, LiList0>* dev, uint8_t number, uint16_t addr) {
       Channel::setup(dev, number, addr);
       sysclock.add(*this);
-      //bh1750.init();
-      //tsl2561.init();
-      max44009.init();
+      sens.init();
     }
 
     uint8_t status () const {
@@ -191,7 +210,7 @@ class LuxChannel : public Channel<Hal, LiList1, EmptyList, List4, PEERS_PER_CHAN
     }
 };
 
-typedef MultiChannelDevice<Hal, LuxChannel, 1, LiList0> LuxType;
+typedef MultiChannelDevice<Hal,LuxChannel<SENSOR_CLASS>, 1, LiList0> LuxType;
 
 LuxType sdev(devinfo, 0x20);
 ConfigButton<LuxType> cfgBtn(sdev);
