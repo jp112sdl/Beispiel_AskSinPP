@@ -106,6 +106,7 @@ class LuxChannel : public Channel<Hal, LiList1, EmptyList, List4, PEERS_PER_CHAN
 
     LuxEventMsg   lmsg;
     uint32_t      lux;
+    uint32_t      lux_prev;
     uint16_t      millis;
 
     //Bh1750<>     bh1750;
@@ -117,7 +118,7 @@ class LuxChannel : public Channel<Hal, LiList1, EmptyList, List4, PEERS_PER_CHAN
     uint8_t last_flags = 0xff;
 
   public:
-    LuxChannel () : Channel(), Alarm(5), lux(0), millis(0) {}
+    LuxChannel () : Channel(), Alarm(5), lux(0), lux_prev(0), millis(0) {}
     virtual ~LuxChannel () {}
 
     // here we do the measurement
@@ -151,8 +152,23 @@ class LuxChannel : public Channel<Hal, LiList1, EmptyList, List4, PEERS_PER_CHAN
         last_flags = flags();
       }
 
-      lmsg.init(msgcnt, lux * 100);
-      device().sendPeerEvent(lmsg, *this);
+      bool sendMsg = true;
+      uint8_t txThresholdPercent = this->getList1().txThresholdPercent();
+      if (txThresholdPercent > 0) {  // a threshold is configured
+        uint8_t pcnt = (lux > 0) ? min(abs(100L / (lux_prev / lux) - 100), 100) : 0;
+        DPRINT(F("thresholdPcnt pcnt: "));DDECLN(txThresholdPercent);
+        DPRINT(F("lux changed   pcnt: "));DDECLN(pcnt);
+        if (pcnt >= txThresholdPercent) { // the calculated percentage between lux_prev and lux is greater or equal to the configured txThresholdPercent
+          lux_prev = lux;                 // save the current lux in lux_prev
+        } else {
+          sendMsg = false;                // otherwise do not send messager
+        }
+      }
+
+      if (sendMsg == true) {
+        lmsg.init(msgcnt, lux * 100);
+        device().broadcastEvent(lmsg, *this);
+      }
     }
 
     uint32_t delay () {
