@@ -182,7 +182,7 @@ class LuxChannel : public Channel<Hal, LiList1, EmptyList, List4, PEERS_PER_CHAN
       uint8_t txThresholdPercent = this->getList1().txThresholdPercent();
       DPRINT(F("thresholdPcnt pcnt: "));DDECLN(txThresholdPercent);
       if (txThresholdPercent > 0) {  // a threshold is configured
-        uint8_t pcnt = (lux > 0) ? min(abs(100.0 / (lux_prev) * lux - 100), 100) : 0;
+        uint8_t pcnt = (lux_prev > 0) ? min(abs(100.0 / (lux_prev) * lux - 100), 100) : 100;
         DPRINT(F("lux changed   pcnt: "));DDECLN(pcnt);
         if (pcnt >= txThresholdPercent) { // the calculated percentage between lux_prev and lux is greater or equal to the configured txThresholdPercent
           lux_prev = lux;                 // save the current lux in lux_prev
