@@ -35,7 +35,7 @@
 // number of available peers per channel
 #define PEERS_PER_CHANNEL 6
 
-#define LUX_EVENT_CYCLIC_TIME 180 //seconds to send cyclic message
+#define LUX_EVENT_CYCLIC_TIME 120 //seconds to send cyclic message
 #define LUX_EVENT_CYCLIC      0x53
 #define LUX_EVENT             0x54
 
@@ -74,12 +74,13 @@ class Hal : public BaseHal {
     }
 } hal;
 
-DEFREGISTER(LiReg0, MASTERID_REGS, DREG_CYCLICINFOMSGDIS, DREG_LOCALRESETDISABLE, DREG_INTKEY)
+DEFREGISTER(LiReg0, MASTERID_REGS, DREG_TRANSMITTRYMAX, DREG_CYCLICINFOMSGDIS, DREG_LOCALRESETDISABLE, DREG_INTKEY)
 class LiList0 : public RegList0<LiReg0> {
   public:
     LiList0 (uint16_t addr) : RegList0<LiReg0>(addr) {}
     void defaults () {
       clear();
+      transmitDevTryMax(1);
       //cyclicInfoMsgDis(0);
       // intKeyVisible(false);
       // localResetDisable(false);
@@ -192,11 +193,16 @@ class LuxChannel : public Channel<Hal, LiList1, EmptyList, List4, PEERS_PER_CHAN
 
       if (sendMsg == true) {
         lmsg.init(device().nextcount(), lux * 100, msgType);
-        if (msgType == LUX_EVENT_CYCLIC)
+
+        if (msgType == LUX_EVENT_CYCLIC) {
           device().broadcastEvent(lmsg, *this);
-        else
+        } else {
+          lmsg.setAck();
           device().sendPeerEvent(lmsg, *this);
+        }
+
       }
+
     }
 
     void setup(Device<Hal, LiList0>* dev, uint8_t number, uint16_t addr) {
