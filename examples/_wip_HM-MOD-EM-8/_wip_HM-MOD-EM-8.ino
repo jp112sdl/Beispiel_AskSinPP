@@ -12,7 +12,7 @@
 #include <LowPower.h>
 
 #include <Register.h>
-#include <ThreeState.h>
+#include <ContactState.h>
 
 // we use a Pro Mini
 // Arduino pin for the LED
@@ -88,8 +88,8 @@ class SCIList1 : public RegList1<Reg1> {
     }
 };
 
-typedef ThreeStateChannel<Hal, SCIList0, SCIList1, DefList4, PEERS_PER_CHANNEL> ChannelType;
-typedef ThreeStateDevice<Hal, ChannelType, CHANNEL_COUNT, SCIList0> SCIType;
+typedef TwoStateChannel<Hal, SCIList0, SCIList1, DefList4, PEERS_PER_CHANNEL> ChannelType;
+typedef StateDevice<Hal, ChannelType, CHANNEL_COUNT, SCIList0> SCIType;
 
 SCIType sdev(devinfo, 0x20);
 ConfigButton<SCIType> cfgBtn(sdev);
@@ -98,10 +98,9 @@ void setup () {
   DINIT(57600, ASKSIN_PLUS_PLUS_IDENTIFIER);
   sdev.init(hal);
   buttonISR(cfgBtn, CONFIG_BUTTON_PIN);
-  const uint8_t posmap[4] = {Position::State::PosA, Position::State::PosB, Position::State::PosA, Position::State::PosB};
 
   for (int i = 0; i < CHANNEL_COUNT; i++) {
-      sdev.channel(i+1).init(sens_pins[i], sens_pins[i], posmap);
+      sdev.channel(i+1).init(sens_pins[i]);
   }
   sdev.initDone();
 }
@@ -120,4 +119,3 @@ void loop() {
     hal.activity.savePower<Sleep<> >(hal);
   }
 }
-

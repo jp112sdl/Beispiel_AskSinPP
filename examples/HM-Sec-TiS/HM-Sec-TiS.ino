@@ -24,7 +24,7 @@
 #include <LowPower.h>
 
 #include <Register.h>
-#include <ThreeState.h>
+#include <ContactState.h>
 
 // we use a Pro Mini
 // Arduino pin for the LED
@@ -108,9 +108,9 @@ public:
 } hal;
 
 DEFREGISTER(Reg0,DREG_INTKEY,DREG_CYCLICINFOMSG,MASTERID_REGS,DREG_TRANSMITTRYMAX)
-class RHSList0 : public RegList0<Reg0> {
+class TiSList0 : public RegList0<Reg0> {
 public:
-  RHSList0(uint16_t addr) : RegList0<Reg0>(addr) {}
+  TiSList0(uint16_t addr) : RegList0<Reg0>(addr) {}
   void defaults () {
     clear();
     cycleInfoMsg(true);
@@ -119,9 +119,9 @@ public:
 };
 
 DEFREGISTER(Reg1,CREG_AES_ACTIVE,CREG_MSGFORPOS,CREG_EVENTDELAYTIME,CREG_LEDONTIME,CREG_TRANSMITTRYMAX)
-class RHSList1 : public RegList1<Reg1> {
+class TiSList1 : public RegList1<Reg1> {
 public:
-  RHSList1 (uint16_t addr) : RegList1<Reg1>(addr) {}
+  TiSList1 (uint16_t addr) : RegList1<Reg1>(addr) {}
   void defaults () {
     clear();
     msgForPosA(1); // CLOSED
@@ -134,12 +134,12 @@ public:
 };
 
 
-typedef ThreeStateChannel<Hal,RHSList0,RHSList1,DefList4,PEERS_PER_CHANNEL> ChannelType;
-class RHSType : public ThreeStateDevice<Hal,ChannelType,1,RHSList0,CYCLETIME> {
+typedef TwoStateChannel<Hal,TiSList0,TiSList1,DefList4,PEERS_PER_CHANNEL> ChannelType;
+class TiltSensorType : public StateDevice<Hal,ChannelType,1,TiSList0,CYCLETIME> {
 public:
-  typedef ThreeStateDevice<Hal,ChannelType,1,RHSList0,CYCLETIME> TSDevice;
-  RHSType(const DeviceInfo& info,uint16_t addr) : TSDevice(info,addr) {}
-  virtual ~RHSType () {}
+  typedef StateDevice<Hal,ChannelType,1,TiSList0,CYCLETIME> TSDevice;
+  TiltSensorType(const DeviceInfo& info,uint16_t addr) : TSDevice(info,addr) {}
+  virtual ~TiltSensorType () {}
 
   virtual void configChanged () {
     TSDevice::configChanged();
@@ -151,15 +151,14 @@ public:
   }
 };
 
-RHSType sdev(devinfo,0x20);
-ConfigButton<RHSType> cfgBtn(sdev);
+TiltSensorType sdev(devinfo,0x20);
+ConfigButton<TiltSensorType> cfgBtn(sdev);
 
 void setup () {
   DINIT(57600,ASKSIN_PLUS_PLUS_IDENTIFIER);
   sdev.init(hal);
   buttonISR(cfgBtn,CONFIG_BUTTON_PIN);
-  const uint8_t posmap[4] = {Position::State::PosA,Position::State::PosB,Position::State::PosA,Position::State::PosB};
-  sdev.channel(1).init(SENS1_PIN,SENS1_PIN,posmap);
+  sdev.channel(1).init(SENS1_PIN);
   sdev.initDone();
 }
 
@@ -177,4 +176,3 @@ void loop() {
     hal.activity.savePower<Sleep<> >(hal);
   }
 }
-

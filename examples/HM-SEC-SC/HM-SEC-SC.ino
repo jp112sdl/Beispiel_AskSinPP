@@ -24,7 +24,7 @@
 #include <LowPower.h>
 
 #include <Register.h>
-#include <ThreeState.h>
+#include <ContactState.h>
 
 // we use a Pro Mini
 // Arduino pin for the LED
@@ -137,10 +137,10 @@ public:
 };
 
 
-typedef ThreeStateChannel<Hal,SCList0,SCList1,DefList4,PEERS_PER_CHANNEL> ChannelType;
-class SCType : public ThreeStateDevice<Hal,ChannelType,1,SCList0, CYCLETIME> {
+typedef TwoStateChannel<Hal,SCList0,SCList1,DefList4,PEERS_PER_CHANNEL> ChannelType;
+class SCType : public StateDevice<Hal,ChannelType,1,SCList0, CYCLETIME> {
 public:
-  typedef ThreeStateDevice<Hal,ChannelType,1,SCList0, CYCLETIME> TSDevice;
+  typedef StateDevice<Hal,ChannelType,1,SCList0, CYCLETIME> TSDevice;
   SCType(const DeviceInfo& info,uint16_t addr) : TSDevice(info,addr) {}
   virtual ~SCType () {}
 
@@ -161,8 +161,7 @@ void setup () {
   DINIT(57600,ASKSIN_PLUS_PLUS_IDENTIFIER);
   sdev.init(hal);
   buttonISR(cfgBtn,CONFIG_BUTTON_PIN);
-  const uint8_t posmap[4] = {Position::State::PosA,Position::State::PosB,Position::State::PosA,Position::State::PosB};
-  sdev.channel(1).init(SENS1_PIN,SENS1_PIN,SABOTAGE_PIN,posmap);
+  sdev.channel(1).init(SENS1_PIN,SABOTAGE_PIN);
   sdev.initDone();
 }
 

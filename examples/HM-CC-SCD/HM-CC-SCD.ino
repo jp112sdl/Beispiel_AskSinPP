@@ -24,7 +24,7 @@
 #include <LowPower.h>
 
 #include <Register.h>
-#include <ThreeState.h>
+#include <ContactState.h>
 
 // we use a Pro Mini
 // Arduino pin for the LED
@@ -113,9 +113,9 @@ public:
 } hal;
 
 DEFREGISTER(Reg0,DREG_INTKEY,DREG_CYCLICINFOMSG,MASTERID_REGS,DREG_TRANSMITTRYMAX)
-class RHSList0 : public RegList0<Reg0> {
+class SCDList0 : public RegList0<Reg0> {
 public:
-  RHSList0(uint16_t addr) : RegList0<Reg0>(addr) {}
+  SCDList0(uint16_t addr) : RegList0<Reg0>(addr) {}
   void defaults () {
     clear();
     cycleInfoMsg(true);
@@ -124,9 +124,9 @@ public:
 };
 
 DEFREGISTER(Reg1,CREG_AES_ACTIVE,CREG_MSGFORPOS,CREG_EVENTDELAYTIME,CREG_LEDONTIME,CREG_TRANSMITTRYMAX)
-class RHSList1 : public RegList1<Reg1> {
+class SCDList1 : public RegList1<Reg1> {
 public:
-  RHSList1 (uint16_t addr) : RegList1<Reg1>(addr) {}
+  SCDList1 (uint16_t addr) : RegList1<Reg1>(addr) {}
   void defaults () {
     clear();
     msgForPosA(1);
@@ -140,12 +140,12 @@ public:
 };
 
 
-typedef ThreeStateChannel<Hal,RHSList0,RHSList1,DefList4,PEERS_PER_CHANNEL> ChannelType;
-class RHSType : public ThreeStateDevice<Hal,ChannelType,1,RHSList0,CYCLETIME> {
+typedef ThreeStateChannel<Hal,SCDList0,SCDList1,DefList4,PEERS_PER_CHANNEL> ChannelType;
+class SCDType : public ThreeStateDevice<Hal,ChannelType,1,SCDList0,CYCLETIME> {
 public:
-  typedef ThreeStateDevice<Hal,ChannelType,1,RHSList0,CYCLETIME> TSDevice;
-  RHSType(const DeviceInfo& info,uint16_t addr) : TSDevice(info,addr) {}
-  virtual ~RHSType () {}
+  typedef ThreeStateDevice<Hal,ChannelType,1,SCDList0,CYCLETIME> TSDevice;
+  SCDType(const DeviceInfo& info,uint16_t addr) : TSDevice(info,addr) {}
+  virtual ~SCDType () {}
 
   virtual void configChanged () {
     TSDevice::configChanged();
@@ -157,8 +157,8 @@ public:
   }
 };
 
-RHSType sdev(devinfo,0x20);
-ConfigButton<RHSType> cfgBtn(sdev);
+SCDType sdev(devinfo,0x20);
+ConfigButton<SCDType> cfgBtn(sdev);
 
 void setup () {
   DINIT(57600,ASKSIN_PLUS_PLUS_IDENTIFIER);
@@ -183,4 +183,3 @@ void loop() {
     hal.activity.savePower<Sleep<> >(hal);
   }
 }
-

@@ -24,7 +24,7 @@
 #include <LowPower.h>
 
 #include <Register.h>
-#include <ThreeState.h>
+#include <ContactState.h>
 
 // we use a Pro Mini
 // Arduino pin for the LED
@@ -35,8 +35,10 @@
 // B0 == PIN 8 on Pro Mini
 #define CONFIG_BUTTON_PIN 8
 
-#define SENS1_PIN 14
-#define SABOTAGE_PIN 15
+#define SENS_PIN      9
+#define SENS_EN_PIN   6
+#define SENS_EN_WAIT  50 //millis to wait after enable pin = high
+#define SABOTAGE_PIN  7
 
 // number of available peers per channel
 #define PEERS_PER_CHANNEL 10
@@ -136,11 +138,11 @@ public:
   }
 };
 
+typedef TwoStateChannel<Hal,SCOList0,SCOList1,DefList4,PEERS_PER_CHANNEL, SENS_EN_WAIT> ChannelType;
 
-typedef ThreeStateChannel<Hal,SCOList0,SCOList1,DefList4,PEERS_PER_CHANNEL> ChannelType;
-class SCOType : public ThreeStateDevice<Hal,ChannelType,1,SCOList0, CYCLETIME> {
+class SCOType : public StateDevice<Hal,ChannelType,1,SCOList0, CYCLETIME> {
 public:
-  typedef ThreeStateDevice<Hal,ChannelType,1,SCOList0, CYCLETIME> TSDevice;
+  typedef StateDevice<Hal,ChannelType,1,SCOList0, CYCLETIME> TSDevice;
   SCOType(const DeviceInfo& info,uint16_t addr) : TSDevice(info,addr) {}
   virtual ~SCOType () {}
 
@@ -161,8 +163,7 @@ void setup () {
   DINIT(57600,ASKSIN_PLUS_PLUS_IDENTIFIER);
   sdev.init(hal);
   buttonISR(cfgBtn,CONFIG_BUTTON_PIN);
-  const uint8_t posmap[4] = {Position::State::PosA,Position::State::PosB,Position::State::PosA,Position::State::PosB};
-  sdev.channel(1).init(SENS1_PIN,SENS1_PIN,SABOTAGE_PIN,posmap);
+  sdev.channel(1).init(SENS_PIN, SENS_EN_PIN, SABOTAGE_PIN);
   sdev.initDone();
 }
 
