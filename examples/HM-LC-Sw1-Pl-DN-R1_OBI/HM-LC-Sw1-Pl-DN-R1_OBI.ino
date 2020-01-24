@@ -45,7 +45,7 @@ const struct DeviceInfo PROGMEM devinfo = {
   {0x00, 0xd8, 0x99},     // Device ID
   "JPLCSw1099",           // Device Serial
   {0x00,0xd8},            // Device Model
-  0x25,                   // Firmware Version
+  0x26,                   // Firmware Version
   as::DeviceType::Switch, // Device Type
   {0x01, 0x00}            // Info Bytes
 };
