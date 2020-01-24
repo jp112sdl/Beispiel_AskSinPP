@@ -75,7 +75,7 @@ const struct DeviceInfo PROGMEM devinfo = {
   {0x00, 0xac, 0x00},     // Device ID
   "HMESPMSw10",           // Device Serial
   {0x00, 0xac},           // Device Model
-  0x25,                   // Firmware Version
+  0x26,                   // Firmware Version
   as::DeviceType::Switch, // Device Type
   {0x01, 0x00}            // Info Bytes
 };
