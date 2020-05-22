@@ -452,8 +452,8 @@ class MixDevice : public ChannelDevice<Hal, VirtBaseChannel<Hal, PMSw1List0>, 6,
           }
 
           if (avgCounter < averaging) {
-            Power   += hlw8012.getActivePower() * 100;
-            Voltage += hlw8012.getVoltage()     * 10;
+            Power   += hlw8012.getActivePower() * 100UL;
+            Voltage += hlw8012.getVoltage()     * 10UL;
             Current += hlw8012.getCurrent()     * 1000UL;
             avgCounter++;
           } else {
