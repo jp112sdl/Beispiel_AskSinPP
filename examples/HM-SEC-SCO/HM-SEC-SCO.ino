@@ -5,19 +5,6 @@
 
 // define this to read the device id, serial and device type from bootloader section
 // #define USE_OTA_BOOTLOADER
-
-#define CFG_STEPUP_BYTE 0x00
-#define CFG_STEPUP_OFF  0x00
-#define CFG_STEPUP_ON   0x01
-
-#define CFG_BAT_LOW_BYTE 0x01
-#define CFG_BAT_CRITICAL_BYTE 0x02
-
-// define device configuration bytes
-#define DEVICE_CONFIG CFG_STEPUP_OFF,22,19
-
-// 24 0030 4D455130323134373633 80 910101
-
 #define EI_NOTEXTERNAL
 #include <EnableInterrupt.h>
 #include <AskSinPP.h>
@@ -57,51 +44,13 @@ const struct DeviceInfo PROGMEM devinfo = {
     {0x01,0x00}             // Info Bytes
 };
 
-class SwitchSensor {
-  InternalVCC internal;
-  ExternalVCC<17,7,LOW,3000> external;
-  uint8_t mod;
-public:
-  typedef uint16_t ValueType;
-  static const int DefaultDelay = 250;
-
-  SwitchSensor() : mod(0) {}
-
-  void mode (uint8_t m) {
-    mod = m;
-    init();
-  }
-
-  void init () {
-    if( mod == 0 ) {
-      internal.init();
-      DPRINTLN("InternalVCC");
-    }
-    else {
-      external.init();
-      DPRINTLN("Stepup - ExternalVCC");
-    }
-  }
-
-  void start () {
-    if( mod == 0 ) internal.start();
-    else external.start();
-  }
-
-  uint16_t finish () {
-    return mod == 0 ? internal.finish() : external.finish();
-  }
-};
-
-typedef BattSensor<AsyncMeter<SwitchSensor> > BatSensor;
-
 /**
  * Configure the used hardware
  */
 typedef AvrSPI<10,11,12,13> SPIType;
 typedef Radio<SPIType,2> RadioType;
 typedef DualStatusLed<LED2_PIN,LED1_PIN> LedType;
-typedef AskSin<LedType,BatSensor,RadioType> BaseHal;
+typedef AskSin<LedType,IrqInternalBatt,RadioType> BaseHal;
 class Hal : public BaseHal {
 public:
   void init (const HMID& id) {
@@ -139,22 +88,7 @@ public:
 };
 
 typedef TwoStateChannel<Hal,SCOList0,SCOList1,DefList4,PEERS_PER_CHANNEL, SENS_EN_WAIT> ChannelType;
-
-class SCOType : public StateDevice<Hal,ChannelType,1,SCOList0, CYCLETIME> {
-public:
-  typedef StateDevice<Hal,ChannelType,1,SCOList0, CYCLETIME> TSDevice;
-  SCOType(const DeviceInfo& info,uint16_t addr) : TSDevice(info,addr) {}
-  virtual ~SCOType () {}
-
-  virtual void configChanged () {
-    TSDevice::configChanged();
-    // set battery low/critical values
-    battery().low(getConfigByte(CFG_BAT_LOW_BYTE));
-    battery().critical(getConfigByte(CFG_BAT_CRITICAL_BYTE));
-    // set the battery mode
-    battery().meter().sensor().mode(getConfigByte(CFG_STEPUP_BYTE));
-  }
-};
+typedef StateDevice<Hal,ChannelType,1,SCOList0, CYCLETIME> SCOType;
 
 SCOType sdev(devinfo,0x20);
 ConfigButton<SCOType> cfgBtn(sdev);
@@ -164,6 +98,7 @@ void setup () {
   sdev.init(hal);
   buttonISR(cfgBtn,CONFIG_BUTTON_PIN);
   sdev.channel(1).init(SENS_PIN, SENS_EN_PIN, SABOTAGE_PIN);
+  while (hal.battery.current() == 0);
   sdev.initDone();
 }
 
