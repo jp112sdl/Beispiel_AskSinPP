@@ -1,0 +1,4 @@
+Fuses (original)
+L: 0xe2
+H: 0xdc
+E: 0xfe
