@@ -40,7 +40,7 @@ const struct DeviceInfo PROGMEM devinfo = {
 };
 
 typedef AvrSPI<10,11,12,13> SPIType;
-typedef Radio<SPIType,2> RadioType;
+typedef Radio<SPIType,2, CC1101_PWR> RadioType;
 typedef StatusLed<LED_PIN> LedType;
 typedef AskSin<LedType,IrqInternalBatt,RadioType> Hal;
 Hal hal;
@@ -81,9 +81,6 @@ ConfigButton<SCType> cfgBtn(sdev);
 
 void setup () {
   DINIT(57600,ASKSIN_PLUS_PLUS_IDENTIFIER);
-  pinMode(CC1101_PWR, OUTPUT);
-  digitalWrite(CC1101_PWR, LOW);
-  _delay_ms(50);
   sdev.init(hal);
   hal.battery.init(60,sysclock);
   hal.battery.low(BAT_LOW);
@@ -93,6 +90,7 @@ void setup () {
   buttonISR(cfgBtn,CONFIG_BTN);
   contactISR(sdev.channel(1), SENS1_PIN);
   sdev.initDone();
+  sdev.channel(1).changed(true);
 }
 
 void loop() {
