@@ -60,11 +60,7 @@ public:
   }
 
   uint8_t flags () const {
-    uint8_t flags = BaseChannel::flags();
-    if( this->device().battery().low() == true ) {
-      flags |= 0x80;
-    }
-    return flags;
+    return BaseChannel::flags();
   }
 
 
