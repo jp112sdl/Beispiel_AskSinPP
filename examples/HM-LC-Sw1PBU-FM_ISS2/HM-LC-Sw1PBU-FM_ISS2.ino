@@ -25,8 +25,6 @@
 #include <AskSinPP.h>
 #include <LowPower.h>
 #include <Switch.h>
-#include <Remote.h>
-#include <MultiChannelDevice.h>
 
 #define RELAY_PIN          12 //PD4
 #define BTN_PIN_1          14 //PD6
@@ -61,18 +59,43 @@ typedef StatusLed<LED_PIN> LedType;
 typedef AskSin<LedType, NoBattery, RadioType> Hal;
 Hal hal;
 
-DEFREGISTER(Reg0, MASTERID_REGS, DREG_INTKEY, DREG_CYCLICINFOMSG)
-class SwList0 : public RegList0<Reg0> {
-  public:
-    SwList0(uint16_t addr) : RegList0<Reg0>(addr) {}
-    void defaults() {
-      clear();
-      intKeyVisible(true);
+class ISS2SwitchChannel : public ActorChannel<Hal,SwitchList1,SwitchList3,PEERS_PER_CHANNEL,List0,SwitchStateMachine> {
+protected:
+  typedef ActorChannel<Hal,SwitchList1,SwitchList3,PEERS_PER_CHANNEL,List0,SwitchStateMachine> BaseChannel;
+  uint8_t pin;
+
+public:
+  ISS2SwitchChannel () : BaseChannel(), pin(0) {}
+  virtual ~ISS2SwitchChannel() {}
+
+  void init (uint8_t p,bool value=false) {
+    pin=p;
+    ArduinoPins::setOutput(pin);
+    typename BaseChannel::List1 l1 = BaseChannel::getList1();
+    this->set(l1.powerUpAction() == true ? 200 : 0, 0, 0xffff );
+    this->changed(true);
+  }
+
+  uint8_t flags () const {
+    return BaseChannel::flags();
+  }
+
+
+  virtual void switchState(__attribute__((unused)) uint8_t oldstate,uint8_t newstate,__attribute__((unused)) uint32_t delay) {
+    if( newstate == AS_CM_JT_ON ) {
+      ArduinoPins::setHigh(pin);
+      device().led().invert(true);
     }
+    else if ( newstate == AS_CM_JT_OFF ) {
+      ArduinoPins::setLow(pin);
+      device().led().invert(false);
+    }
+    this->changed(true);
+  }
 };
 
-typedef SwitchChannel<Hal, PEERS_PER_CHANNEL, SwList0> SwChannel;
-typedef MultiChannelDevice<Hal, SwitchChannel<Hal, PEERS_PER_CHANNEL, List0>, 1> SwitchType;
+typedef ISS2SwitchChannel swc;
+typedef MultiChannelDevice<Hal, swc, 1> SwitchType;
 
 SwitchType sdev(devinfo,0x20);
 ConfigButton<SwitchType> cfgBtn(sdev);
