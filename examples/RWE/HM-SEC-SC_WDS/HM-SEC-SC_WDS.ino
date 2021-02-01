@@ -14,7 +14,7 @@
 #include <LowPower.h>
 
 #include <Register.h>
-#include "WDSContactState.h"
+#include <ContactState.h>
 
 #define LED_PIN      8
 #define CONFIG_BTN   0
@@ -73,11 +73,49 @@ public:
 };
 
 
-typedef WDSStateChannel<Hal,SCList0,SCList1,DefList4,PEERS_PER_CHANNEL> ChannelType;
+class WDSPosition : public Position {
+private:
+  uint8_t pin;
+public:
+  WDSPosition () : pin(0) {}
+  void init (uint8_t p) {
+    pin = p;
+    pinMode(p,INPUT);
+  }
+
+  void measure (__attribute__((unused)) bool async=false) {
+    _position = digitalRead(pin) == LOW ? State::PosA : State::PosB;
+  }
+  uint32_t interval () { return 0; }
+};
+
+template <class HALTYPE,class List0Type,class List1Type,class List4Type,int PEERCOUNT>
+class TwoPinChannel : public StateGenericChannel<WDSPosition,HALTYPE,List0Type,List1Type,List4Type,PEERCOUNT> {
+public:
+  typedef StateGenericChannel<WDSPosition,HALTYPE,List0Type,List1Type,List4Type,PEERCOUNT> BaseChannel;
+
+  TwoPinChannel () : BaseChannel() {};
+  ~TwoPinChannel () {}
+
+  void init (uint8_t pin) {
+    BaseChannel::possens.init(pin);
+  }
+
+  uint32_t interval () { return BaseChannel::possens.interval(); }
+};
+
+typedef TwoPinChannel<Hal,SCList0,SCList1,DefList4,PEERS_PER_CHANNEL> ChannelType;
 typedef StateDevice<Hal,ChannelType,1,SCList0, CYCLETIME> SCType;
 
 SCType sdev(devinfo,0x20);
 ConfigButton<SCType> cfgBtn(sdev);
+
+void funcISR () {
+  // we simply activate the alarm
+  Alarm& a = sdev.channel(1);
+  sysclock.cancel(a);
+  sysclock.add(a);
+}
 
 void setup () {
   DINIT(57600,ASKSIN_PLUS_PLUS_IDENTIFIER);
@@ -88,8 +126,11 @@ void setup () {
   while (hal.battery.current() == 0);
 
   buttonISR(cfgBtn,CONFIG_BTN);
-  contactISR(sdev.channel(1), SENS1_PIN);
+  sdev.channel(1).init(SENS1_PIN);
   sdev.initDone();
+
+  contactISR(SENS1_PIN,funcISR);
+
   sdev.channel(1).changed(true);
 }
 
