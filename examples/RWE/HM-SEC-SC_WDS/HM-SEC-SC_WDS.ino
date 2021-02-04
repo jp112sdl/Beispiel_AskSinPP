@@ -120,7 +120,7 @@ void funcISR () {
 void setup () {
   DINIT(57600,ASKSIN_PLUS_PLUS_IDENTIFIER);
   sdev.init(hal);
-  hal.battery.init(60,sysclock);
+  hal.battery.init();
   hal.battery.low(BAT_LOW);
   hal.battery.critical(BAT_CRIT);
   while (hal.battery.current() == 0);
