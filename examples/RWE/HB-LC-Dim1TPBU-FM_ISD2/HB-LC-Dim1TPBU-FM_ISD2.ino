@@ -5,6 +5,7 @@
 // 2019-01-10 scuba82 Creative Commons - http://creativecommons.org/licenses/by-nc-sa/3.0/de/
 // link: https://github.com/pa-pa/AskSinPP/tree/V4/examples/custom/HB-LC-Dim1TPBU-FM
 //- -----------------------------------------------------------------------------------------------------------------------
+// ci-test=yes board=644p aes=no
 
 // define this to read the device id, serial and device type from bootloader section
 //#define USE_OTA_BOOTLOADER
