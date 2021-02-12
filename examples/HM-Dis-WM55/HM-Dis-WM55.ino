@@ -23,6 +23,11 @@
 #include <MultiChannelDevice.h>
 #include "Icons.h"
 
+// make compatible with v5.0.0
+#ifndef ASKSIN_PLUS_PLUS_VERSION_STR
+  #define ASKSIN_PLUS_PLUS_VERSION_STR ASKSIN_PLUS_PLUS_VERSION
+#endif
+
 #define CONFIG_BUTTON_PIN 13
 #define LED_PIN            4
 #define BTN1_PIN          19
@@ -439,7 +444,7 @@ void initDisplay(uint8_t serial[11]) {
   drawLine(1, clWHITE, 255, F("  WELCOME!"));
   drawLine(2, clWHITE, 255, F("------------"));
   drawLine(3, clRED, 5, F("AskSinPP"));
-  drawLine(4, clYELLOW, 6, F("V " ASKSIN_PLUS_PLUS_VERSION));
+  drawLine(4, clYELLOW, 6, F("V " ASKSIN_PLUS_PLUS_VERSION_STR));
   drawLine(5, clWHITE, 255, F("------------"));
   drawLine(6, clGREEN, 8,(char*)serial);
 }
