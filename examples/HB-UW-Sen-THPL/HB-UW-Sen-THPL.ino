@@ -1,4 +1,4 @@
-// ci-test=yes board=328p aes=no
+// ci-test=no board=328p aes=no
 #include "HB-UW-Sen-THPL.h"
 #include "Register.h"															// configuration sheet
 
