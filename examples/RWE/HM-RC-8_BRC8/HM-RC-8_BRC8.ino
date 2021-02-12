@@ -68,7 +68,7 @@ void setup () {
   digitalWrite(CC1101_PWR, LOW);
   _delay_ms(200);
   sdev.init(hal);
-  hal.battery.init(0,sysclock);
+  hal.battery.init();
   hal.battery.low(22);
   hal.battery.critical(19);
 

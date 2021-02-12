@@ -128,7 +128,7 @@ void setup () {
 
   if (TA > 0) {
     sdev.init(hal);
-    hal.battery.init(0,sysclock);
+    hal.battery.init();
     hal.battery.low(BAT_LOW);
     hal.battery.critical(BAT_CRIT);
     sdev.initDone();
