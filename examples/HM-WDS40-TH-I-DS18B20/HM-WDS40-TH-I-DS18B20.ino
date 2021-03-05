@@ -13,7 +13,8 @@
 #include <LowPower.h>
 
 #include <MultiChannelDevice.h>
-#include <DallasTemperature.h>
+#include <OneWire.h>
+#include <sensors/Ds18b20.h>
 
 // we use a Pro Mini
 // Arduino pin for the LED
@@ -21,6 +22,7 @@
 #define LED_PIN 5
 // D4 == PIN 4 on Pro Mini
 #define DS18B20_PIN 4
+OneWire oneWire(DS18B20_PIN);
 // Arduino pin for the config button
 // B0 == PIN 8 on Pro Mini
 #define CONFIG_BUTTON_PIN 8
@@ -44,9 +46,6 @@
 
 // all library classes are placed in the namespace 'as'
 using namespace as;
-
-OneWire ourWire(DS18B20_PIN);
-DallasTemperature sensors(&ourWire);
 
 // define all device properties
 const struct DeviceInfo PROGMEM devinfo = {
@@ -86,6 +85,7 @@ class WeatherChannel : public Channel<Hal, List1, EmptyList, List4, PEERS_PER_CH
     int16_t         temp;
     uint8_t         humidity;
     uint16_t        millis;
+    Ds18b20         ds18b20[1];
 
   public:
     WeatherChannel () : Channel(), Alarm(5), temp(0), humidity(0), millis(0) {}
@@ -94,11 +94,11 @@ class WeatherChannel : public Channel<Hal, List1, EmptyList, List4, PEERS_PER_CH
     // here we do the measurement
     void measure () {
       DPRINT("Measure...\n");
-      sensors.requestTemperatures();
-      float t = sensors.getTempCByIndex(0);
+
+      Ds18b20::measure(ds18b20, 1);
+      temp = ds18b20[0].temperature();
 
       humidity = 0;
-      temp = t * 10.0;
       DPRINT("T/H = " + String(temp+OFFSETtemp)+"/"+ String(humidity+OFFSEThumi) + "\n");
     }
     
@@ -118,6 +118,7 @@ class WeatherChannel : public Channel<Hal, List1, EmptyList, List4, PEERS_PER_CH
     }
     void setup(Device<Hal, List0>* dev, uint8_t number, uint16_t addr) {
       Channel::setup(dev, number, addr);
+      Ds18b20::init(oneWire, ds18b20, 1);
       sysclock.add(*this);
     }
 
@@ -137,7 +138,6 @@ ConfigButton<WeatherType> cfgBtn(sdev);
 
 void setup () {
   DINIT(57600, ASKSIN_PLUS_PLUS_IDENTIFIER);
-  sensors.begin();
   sdev.init(hal);
   hal.initBattery(60UL * 60, 22, 19);
   buttonISR(cfgBtn, CONFIG_BUTTON_PIN);
