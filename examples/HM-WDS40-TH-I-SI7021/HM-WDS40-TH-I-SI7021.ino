@@ -15,7 +15,7 @@
 
 #include <MultiChannelDevice.h>
 //https://github.com/jayjayuk/Si7021-Humidity-And-Temperature-Sensor-Library
-#include <sensors/Si7021.h>
+#include <Si7021.h>
 
 // we use a Pro Mini
 // Arduino pin for the LED
@@ -81,8 +81,10 @@ class WeatherChannel : public Channel<Hal, List1, EmptyList, List4, PEERS_PER_CH
 
     WeatherEventMsg msg;
 
-    Si7021          si7021;
+    SI7021          si7021;
     uint16_t        millis;
+    int16_t temp;
+    uint8_t humidity;
 
   public:
     WeatherChannel () : Channel(), Alarm(5), millis(0) {}
@@ -92,8 +94,9 @@ class WeatherChannel : public Channel<Hal, List1, EmptyList, List4, PEERS_PER_CH
     // here we do the measurement
     void measure () {
       DPRINT("Measure...\n");
-      si7021.measure();
-      DPRINT("T/H = ");DDEC(si7021.temperature()+OFFSETtemp);DPRINT("/");DDECLN(si7021.humidity()+OFFSEThumi);
+      temp = (int16_t) (si7021.readTemp() * 10);
+      humidity = (uint8_t) si7021.readHumidity();
+      DPRINT("T/H = ");DDEC(temp+OFFSETtemp);DPRINT("/");DDECLN(humidity+OFFSEThumi);
     }
 
     virtual void trigger (__attribute__ ((unused)) AlarmClock& clock) {
@@ -103,7 +106,7 @@ class WeatherChannel : public Channel<Hal, List1, EmptyList, List4, PEERS_PER_CH
       clock.add(*this);
       measure();
 
-      msg.init(msgcnt, si7021.temperature()+OFFSETtemp,si7021.humidity()+OFFSEThumi, device().battery().low());
+      msg.init(msgcnt, temp+OFFSETtemp,humidity+OFFSEThumi, device().battery().low());
       if (msgcnt % 20 == 1) device().sendPeerEvent(msg, *this); else device().broadcastEvent(msg, *this);
     }
 
@@ -112,7 +115,7 @@ class WeatherChannel : public Channel<Hal, List1, EmptyList, List4, PEERS_PER_CH
     }
     void setup(Device<Hal, List0>* dev, uint8_t number, uint16_t addr) {
       Channel::setup(dev, number, addr);
-      si7021.init();
+      si7021.begin();
       sysclock.add(*this);
     }
 
