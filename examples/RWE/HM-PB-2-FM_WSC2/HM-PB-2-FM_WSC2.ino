@@ -33,7 +33,9 @@
 #define ACTIVATE_PIN      9
 
 #define WAKE_TIME_MS      2500   //Stay awake for 2.5 seconds after last action (original eQ-3 -> 10 secs)
-#define MSG_COUNT_BYTE    8     //StorageConfig Byte to save last message counter value
+#define MSG_COUNT_BYTE    8      //StorageConfig Byte to save last message counter value
+#define RPT_COUNT_BYTE_1  9      //StorageConfig Byte to save last repeat counter value ch.1
+#define RPT_COUNT_BYTE_2  10     //StorageConfig Byte to save last repeat counter value ch.2
 
 #define BAT_LOW           22
 #define BAT_CRIT          19
@@ -178,6 +180,8 @@ public:
       StorageConfig sc = sdev.getConfigArea();
       uint8_t currentCount = sdev.nextcount() - 1;
       sc.setByte(MSG_COUNT_BYTE, currentCount);
+      sc.setByte(RPT_COUNT_BYTE_1, sdev.channel(1).repeatCount());
+      sc.setByte(RPT_COUNT_BYTE_2, sdev.channel(2).repeatCount());
       sc.validate();
       DPRINT("setByte ");DDECLN(currentCount);
     }
@@ -222,6 +226,9 @@ void setup () {
     StorageConfig sc = sdev.getConfigArea();
     uint8_t msgCount = sc.getByte(MSG_COUNT_BYTE);
     while (sdev.nextcount() < msgCount);
+
+    sdev.channel(1).repeatCount(sc.getByte(RPT_COUNT_BYTE_1));
+    sdev.channel(2).repeatCount(sc.getByte(RPT_COUNT_BYTE_2));
   
     hal.radio.setSendTimeout();
     if (TA == 1) cfgBtn.irq();
