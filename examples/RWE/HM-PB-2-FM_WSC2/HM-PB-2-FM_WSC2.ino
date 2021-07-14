@@ -22,7 +22,7 @@
 #include <EnableInterrupt.h>
 #include <AskSinPP.h>
 #include <MultiChannelDevice.h>
-#include <Register.h>
+#include <Remote.h>
 
 #define LED_PIN           8
 #define CC1101_GDO0_PIN   2
@@ -56,89 +56,6 @@ typedef AvrSPI<10,11,12,13> SPIType;
 typedef Radio<SPIType,CC1101_GDO0_PIN> RadioType;
 typedef StatusLed<LED_PIN> LedType;
 typedef AskSin<LedType,IrqInternalBatt,RadioType> Hal;
-
-#define remoteISR(device,chan,pin) class device##chan##ISRHandler { \
-  public: \
-  static void isr () { device.channel(chan).irq(); } \
-}; \
-device.channel(chan).button().init(pin); \
-if( digitalPinToInterrupt(pin) == NOT_AN_INTERRUPT ) \
-  enableInterrupt(pin,device##chan##ISRHandler::isr,CHANGE); \
-else \
-  attachInterrupt(digitalPinToInterrupt(pin),device##chan##ISRHandler::isr,CHANGE);
-
-DEFREGISTER(RemoteReg1,CREG_LONGPRESSTIME,CREG_AES_ACTIVE,CREG_DOUBLEPRESSTIME)
-class RemoteList1 : public RegList1<RemoteReg1> {
-public:
-  RemoteList1 (uint16_t addr) : RegList1<RemoteReg1>(addr) {}
-  void defaults () {
-    clear();
-    longPressTime(1);
-    // aesActive(false);
-    // doublePressTime(0);
-  }
-};
-
-template<class HALTYPE,int PEERCOUNT,class List0Type=List0,class List1Type=RemoteList1,class ButtonType=Button>
-class RemoteChannel : public Channel<HALTYPE,List1Type,EmptyList,DefList4,PEERCOUNT,List0Type>, public ButtonType {
-
-private:
-  volatile bool isr;
-
-public:
-
-  typedef Channel<HALTYPE,List1Type,EmptyList,DefList4,PEERCOUNT,List0Type> BaseChannel;
-
-  RemoteChannel () : BaseChannel(), isr(false) {}
-  virtual ~RemoteChannel () {}
-
-  ButtonType& button () { return *(ButtonType*)this; }
-
-  uint8_t status () const {
-    return 0;
-  }
-
-  uint8_t flags () const {
-    return 0;
-  }
-
-  virtual void state(uint8_t s) {
-    DHEX(BaseChannel::number());
-    ButtonType::state(s);
-    RemoteEventMsg& msg = (RemoteEventMsg&)this->device().message();
-    uint8_t msgcnt = this->device().nextcount();
-    msg.init(msgcnt,this->number(),msgcnt,(s==ButtonType::longreleased || s==ButtonType::longpressed),this->device().battery().low());
-    if( s == ButtonType::released || s == ButtonType::longreleased) {
-      // send the message to every peer
-      this->device().sendPeerEvent(msg,*this);
-    }
-    else if (s == ButtonType::longpressed) {
-      // broadcast the message
-      this->device().broadcastPeerEvent(msg,*this);
-    }
-  }
-
-  uint8_t state() const {
-    return Button::state();
-  }
-
-  bool pressed () const {
-    uint8_t s = state();
-    return s == Button::pressed || s == Button::debounce || s == Button::longpressed;
-  }
-
-  bool configChanged() {
-    //we have to add 300ms to the value set in CCU!
-    uint16_t _longpressTime = 300 + (this->getList1().longPressTime() * 100);
-    //DPRINT("longpressTime = ");DDECLN(_longpressTime);
-    this->setLongPressTime(millis2ticks(_longpressTime));
-    if( this->canDoublePress() == true ) {
-      uint16_t _doublepressTime = this->getList1().doublePressTime() * 100;
-      this->setDoublePressTime(millis2ticks(_doublepressTime));
-    }
-    return true;
-  }
-};
 
 typedef RemoteChannel<Hal,PEERS_PER_CHANNEL,List0> ChannelType;
 typedef MultiChannelDevice<Hal,ChannelType,2> RemoteType;
