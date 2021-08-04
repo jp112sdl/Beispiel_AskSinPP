@@ -7,6 +7,10 @@
 
 // define this to read the device id, serial and device type from bootloader section
 // #define USE_OTA_BOOTLOADER
+#define SENSOR_ONLY
+#define SIMPLE_CC1101_INIT
+#define NOCRC
+#define NDEBUG
 
 #define STORAGEDRIVER at24cX<0x50,128,32> 
 #include <Wire.h>
@@ -32,6 +36,7 @@
 #define BTN07_PIN   6
 #define BTN08_PIN   7
 
+#define SLEEP_DELAY_MS    3000 //wait milliseconds before sleep mode
 #define PEERS_PER_CHANNEL 10
 
 // all library classes are placed in the namespace 'as'
@@ -51,7 +56,7 @@ const struct DeviceInfo PROGMEM devinfo = {
  * Configure the used hardware
  */
 typedef AvrSPI<10,11,12,13> SPIType;
-typedef Radio<SPIType,CC1101_GDO0> RadioType;
+typedef Radio<SPIType,CC1101_GDO0, CC1101_PWR> RadioType;
 typedef StatusLed<LED> LedType;
 typedef AskSin<LedType,IrqInternalBatt,RadioType> Hal;
 
@@ -64,9 +69,6 @@ RemoteType sdev(devinfo,0x20);
 
 void setup () {
   DINIT(57600,ASKSIN_PLUS_PLUS_IDENTIFIER);
-  pinMode(CC1101_PWR, OUTPUT);
-  digitalWrite(CC1101_PWR, LOW);
-  _delay_ms(200);
   sdev.init(hal);
   hal.battery.init();
   hal.battery.low(22);
@@ -88,10 +90,39 @@ void setup () {
   sdev.startPairing();
 }
 
+class PowerOffAlarm : public Alarm {
+  private:
+    bool    timerActive;
+  public:
+    PowerOffAlarm () : Alarm(0), timerActive(false) {}
+    virtual ~PowerOffAlarm () {}
+
+    void activateTimer(bool en) {
+      if (en == true && timerActive == false) {
+        sysclock.cancel(*this);
+        set(millis2ticks(SLEEP_DELAY_MS));
+        sysclock.add(*this);
+      } else if (en == false) {
+        sysclock.cancel(*this);
+      }
+      timerActive = en;
+    }
+
+    virtual void trigger(__attribute__((unused)) AlarmClock& clock) {
+      powerOff();
+    }
+
+    void powerOff() {
+      hal.led.ledOff();
+      hal.radio.setIdle();
+      LowPower.powerDown(SLEEP_FOREVER, ADC_OFF, BOD_OFF);
+    }
+
+} pwrOffAlarm;
+
 void loop() {
   bool worked = hal.runready();
   bool poll = sdev.pollRadio();
-  if( worked == false && poll == false ) {
-    hal.activity.savePower<Sleep<>>(hal);
-  }
+  pwrOffAlarm.activateTimer( hal.activity.stayAwake() == false &&  worked == false && poll == false );
+
 }
