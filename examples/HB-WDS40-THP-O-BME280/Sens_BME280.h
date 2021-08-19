@@ -9,6 +9,16 @@
 
 namespace as {
 
+BME280I2C::Settings settings(
+   BME280::OSR_X1, // Temperature Oversampling Rate (tempOSR): OSR Enum, default = OSR_X1
+   BME280::OSR_X1, // Humidity Oversampling Rate (humOSR): OSR Enum, default = OSR_X1
+   BME280::OSR_X1, // Pressure Oversampling Rate (presOSR): OSR Enum, default = OSR_X1
+   BME280::Mode_Forced, // Mode (mode): Mode Enum, default = Mode_Forced
+   BME280::StandbyTime_1000ms, // Standby Time (standbyTime): StandbyTime Enum, default = StandbyTime_1000ms
+   BME280::Filter_Off, // Filter (filter): Filter Enum, default = Filter_16
+   BME280::SpiEnable_False // SPI Enable: SpiEnable Enum, default = false
+);
+
 class Sens_Bme280 : public Sensor {
 
   int16_t   _temperature;
@@ -41,6 +51,8 @@ public:
      default:
        DPRINTLN(F("BME280 sensor NOT OK"));
     }
+    
+    _bme280.setSettings(settings);
   }
 
   void measure (uint16_t height) {
