@@ -18,9 +18,9 @@
 // we use a Pro Mini
 // Arduino pin for the LED
 // D5 == PIN 5 on Pro Mini
-#define LED_PIN 5
+#define LED_PIN 4
 // D4 == PIN 4 on Pro Mini
-#define DHT22_PIN 4
+#define DHT22_PIN A5
 // Arduino pin for the config button
 // B0 == PIN 8 on Pro Mini
 #define CONFIG_BUTTON_PIN 8
@@ -61,7 +61,7 @@ const struct DeviceInfo PROGMEM devinfo = {
 typedef AvrSPI<10, 11, 12, 13> SPIType;
 typedef Radio<SPIType, 2> RadioType;
 typedef StatusLed<LED_PIN> LedType;
-typedef AskSin<LedType, BatterySensor, RadioType> Hal;
+typedef AskSin<LedType, IrqInternalBatt, RadioType> Hal;
 Hal hal;
 
 class WeatherEventMsg : public Message {
