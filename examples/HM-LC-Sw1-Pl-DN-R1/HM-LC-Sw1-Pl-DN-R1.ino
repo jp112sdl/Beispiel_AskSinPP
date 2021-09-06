@@ -7,15 +7,6 @@
 // define this to read the device id, serial and device type from bootloader section
 // #define USE_OTA_BOOTLOADER
 
-// number of relays by defining the device
-
-
-#define CFG_LOWACTIVE_BYTE 0x00
-#define CFG_LOWACTIVE_ON   0x01
-#define CFG_LOWACTIVE_OFF  0x00
-
-#define DEVICE_CONFIG CFG_LOWACTIVE_OFF
-
 #define EI_NOTEXTERNAL
 #include <EnableInterrupt.h>
 #include <AskSinPP.h>
@@ -31,7 +22,8 @@
 // B0 == PIN 8 on Pro Mini
 #define CONFIG_BUTTON_PIN 8
 #define LED_PIN           4
-#define RELAY1_PIN        5
+#define OUT_LONG_PIN      5
+#define OUT_SHORT_PIN     6
 
 
 // number of available peers per channel
@@ -57,8 +49,74 @@ const struct DeviceInfo PROGMEM devinfo = {
 typedef AvrSPI<10, 11, 12, 13> RadioSPI;
 typedef AskSin<StatusLed<LED_PIN>, NoBattery, Radio<RadioSPI, 2> > Hal;
 
-// setup the device with channel type and number of channels
-typedef MultiChannelDevice<Hal, SwitchChannel<Hal, PEERS_PER_CHANNEL, List0>, 1> SwitchType;
+class MySwitchChannel : public ActorChannel<Hal,SwitchList1,SwitchList3,PEERS_PER_CHANNEL,List0,SwitchStateMachine> {
+  class PinControl : public Alarm {
+  private:
+    uint8_t pin_long;
+    uint8_t pin_short;
+    bool first;
+  public:
+    PinControl () : Alarm(0), pin_long(0), pin_short(0), first(true) {}
+    virtual ~PinControl () {}
+
+    void initPins(uint8_t p_long,uint8_t p_short) {
+      pin_long=p_long;
+      pin_short=p_short;
+      ArduinoPins::setOutput(pin_long);
+      ArduinoPins::setOutput(pin_short);
+    }
+
+    void start() {
+      ArduinoPins::setLow(pin_long);
+      ArduinoPins::setLow(pin_short);
+      sysclock.cancel(*this);
+      first = true;
+      set(millis2ticks(1000));
+      ArduinoPins::setHigh(pin_long);
+      sysclock.add(*this);
+    }
+
+    virtual void trigger (__attribute__ ((unused)) AlarmClock& clock) {
+      if (first == true) {
+        ArduinoPins::setLow(pin_long);
+        ArduinoPins::setHigh(pin_short);
+        set(millis2ticks(500));
+        clock.add(*this);
+      } else {
+        ArduinoPins::setLow(pin_short);
+      }
+      first = false;
+    }
+  };
+
+  PinControl pincontrol;
+
+protected:
+  typedef ActorChannel<Hal,SwitchList1,SwitchList3,PEERS_PER_CHANNEL,List0,SwitchStateMachine> BaseChannel;
+public:
+  MySwitchChannel () : BaseChannel() {}
+  virtual ~MySwitchChannel() {}
+
+  void init (uint8_t p_long,uint8_t p_short) {
+    pincontrol.initPins(p_long, p_short);
+    typename BaseChannel::List1 l1 = BaseChannel::getList1();
+    this->set(l1.powerUpAction() == true ? 200 : 0, 0, 0xffff );
+    this->changed(true);
+  }
+
+  uint8_t flags () const {
+    return BaseChannel::flags();
+  }
+
+  virtual void switchState(__attribute__((unused)) uint8_t oldstate,uint8_t newstate,__attribute__((unused)) uint32_t delay) {
+    if (( newstate == AS_CM_JT_ON ) || ( newstate == AS_CM_JT_OFF )) {
+      pincontrol.start();
+    }
+    this->changed(true);
+  }
+};
+
+typedef MultiChannelDevice<Hal, MySwitchChannel, 1> SwitchType;
 
 Hal hal;
 SwitchType sdev(devinfo, 0x20);
@@ -69,27 +127,18 @@ void initPeerings (bool first) {
   if ( first == true ) {
     HMID devid;
     sdev.getDeviceID(devid);
-    for ( uint8_t i = 1; i <= sdev.channels(); ++i ) {
-      Peer ipeer(devid, i);
-      sdev.channel(i).peer(ipeer);
-    }
+    Peer ipeer(devid, 1);
+    sdev.channel(1).peer(ipeer);
   }
-}
-
-void initModelType () {
-  uint8_t model[2];
-  sdev.getDeviceModel(model);
-  sdev.channels(1);
 }
 
 void setup () {
   DINIT(57600, ASKSIN_PLUS_PLUS_IDENTIFIER);
   bool first = sdev.init(hal);
-  sdev.channel(1).init(RELAY1_PIN, false);
+  sdev.channel(1).init(OUT_LONG_PIN, OUT_SHORT_PIN);
 
   buttonISR(cfgBtn, CONFIG_BUTTON_PIN);
 
-  initModelType();
   initPeerings(first);
   sdev.initDone();
 }
