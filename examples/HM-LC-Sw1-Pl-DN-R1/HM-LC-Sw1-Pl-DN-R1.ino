@@ -52,40 +52,52 @@ typedef AskSin<StatusLed<LED_PIN>, NoBattery, Radio<RadioSPI, 2> > Hal;
 class MySwitchChannel : public ActorChannel<Hal,SwitchList1,SwitchList3,PEERS_PER_CHANNEL,List0,SwitchStateMachine> {
   class PinControl : public Alarm {
   private:
-    uint8_t pin_long;
-    uint8_t pin_short;
-    bool first;
+    uint8_t pin_A;
+    uint8_t pin_B;
+    uint8_t loopcount;
   public:
-    PinControl () : Alarm(0), pin_long(0), pin_short(0), first(true) {}
+    PinControl () : Alarm(0), pin_A(0), pin_B(0), loopcount(0) {}
     virtual ~PinControl () {}
 
     void initPins(uint8_t p_long,uint8_t p_short) {
-      pin_long=p_long;
-      pin_short=p_short;
-      ArduinoPins::setOutput(pin_long);
-      ArduinoPins::setOutput(pin_short);
+      pin_A=p_long;
+      pin_B=p_short;
+      ArduinoPins::setOutput(pin_A);
+      ArduinoPins::setOutput(pin_B);
     }
 
     void start() {
-      ArduinoPins::setLow(pin_long);
-      ArduinoPins::setLow(pin_short);
       sysclock.cancel(*this);
-      first = true;
-      set(millis2ticks(1000));
-      ArduinoPins::setHigh(pin_long);
+      loopcount = 0;
+      set(0);
       sysclock.add(*this);
     }
 
     virtual void trigger (__attribute__ ((unused)) AlarmClock& clock) {
-      if (first == true) {
-        ArduinoPins::setLow(pin_long);
-        ArduinoPins::setHigh(pin_short);
-        set(millis2ticks(500));
-        clock.add(*this);
-      } else {
-        ArduinoPins::setLow(pin_short);
+      switch (loopcount) {
+        case 0:
+          ArduinoPins::setHigh(pin_A);
+          ArduinoPins::setLow (pin_B);
+          set(millis2ticks(1000));
+          break;
+        case 1:
+          ArduinoPins::setLow (pin_A);
+          ArduinoPins::setHigh(pin_B);
+          set(millis2ticks(500));
+        break;  
+        case 2:
+          ArduinoPins::setHigh(pin_A);
+          ArduinoPins::setHigh(pin_B);
+          set(millis2ticks(100));
+        case 3:
+          ArduinoPins::setLow (pin_A);
+          ArduinoPins::setLow (pin_B);
+        break;
       }
-      first = false;
+
+      if (loopcount < 3) clock.add(*this);
+      
+      loopcount++;   
     }
   };
 
