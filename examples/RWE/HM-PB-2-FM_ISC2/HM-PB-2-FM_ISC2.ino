@@ -45,7 +45,7 @@ const struct DeviceInfo PROGMEM devinfo = {
    Configure the used hardware
 */
 typedef AvrSPI<10, 11, 12, 13> RadioSPI;
-typedef Radio<RadioSPI, CC1101_PWR_PIN, CC1101_PWR_PIN> RadioType;
+typedef Radio<RadioSPI, CC1101_GDO0_PIN, CC1101_PWR_PIN> RadioType;
 typedef StatusLed<LED_PIN> LedType;
 typedef AskSin<LedType, IrqInternalBatt, RadioType> Hal;
 
