@@ -78,6 +78,14 @@ public:
     return 0;
   }
 
+  uint8_t peers () const { return 36; }
+
+  Peer peerat (uint8_t idx) const {
+    const RepeaterPartner& p = RepeaterPartnerDevices[idx];
+    Peer result(p.SENDER,p.BCAST);
+    return result;
+  }
+
   void dumpRepeatedDevices() {
     for (uint8_t i = 0; i < 36; i++) {
       if (i < 9) DPRINT("0");
