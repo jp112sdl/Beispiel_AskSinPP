@@ -11,12 +11,13 @@
 
 #define EI_NOTEXTERNAL
 #include <EnableInterrupt.h>
+#include <Adafruit_GFX.h>    // Core graphics library
+#include <Adafruit_ST7735.h> // Hardware-specific library for ST7735
+
 #include <SPI.h>  // after including SPI Library - we can use LibSPI class
 
 #include <AskSinPP.h>
 #include <LowPower.h>
-#include <Adafruit_GFX.h>    // Core graphics library
-#include <Adafruit_ST7735.h> // Hardware-specific library for ST7735
 #include "FreeMono9pt7bMod.h"
 
 #include <Register.h>
