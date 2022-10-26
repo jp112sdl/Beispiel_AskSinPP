@@ -439,8 +439,18 @@ void counter1ISR () {
   }
 }
 
-
 ConfigButton<MeterType> cfgBtn(sdev);
+
+class CycleInfoAlarm : public Alarm {
+public:
+CycleInfoAlarm () : Alarm (0) {}
+virtual ~CycleInfoAlarm () {}
+  void trigger (AlarmClock& clock)  {
+   set(seconds2ticks(60UL*60));
+   clock.add(*this);
+   sdev.channel(1).changed(true);
+  }
+} cycle;
 
 void setup () {
   DINIT(57600,ASKSIN_PLUS_PLUS_IDENTIFIER);
@@ -458,6 +468,7 @@ void setup () {
   // add channel 1 to timer to send event
   sysclock.add(sdev.channel(1));
   sdev.initDone();
+  sysclock.add(cycle);
 }
 
 void loop() {
