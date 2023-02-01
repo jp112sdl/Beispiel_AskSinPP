@@ -100,14 +100,14 @@ typedef MultiChannelDevice<Hal, swc, 1> SwitchType;
 
 SwitchType sdev(devinfo,0x20);
 ConfigButton<SwitchType> cfgBtn(sdev);
-InternalButton<SwitchType> btn1(sdev,2);
-InternalButton<SwitchType> btn2(sdev,3);
+InternalButton<SwitchType> btn1(sdev,1);
+InternalButton<SwitchType> btn2(sdev,2);
 
 void initPeerings (bool first) {
   if ( first == true ) {
     HMID devid;
     sdev.getDeviceID(devid);
-    sdev.channel(1).peer(Peer(devid, 2), Peer(devid, 3));
+    sdev.channel(1).peer(Peer(devid, 1), Peer(devid, 2));
   }
 }
 
