@@ -58,8 +58,7 @@
 #define PHASECUT_MODE 0 // 0 = trailing-edge phase cut; 1 = leading-edge phase cut
 
 // number of available peers per channel
-#define PEERS_PER_DimChannel     4
-#define PEERS_PER_RemoteChannel  8
+#define PEERS_PER_DimChannel     8
 
 // all library classes are placed in the namespace 'as'
 using namespace as;
@@ -87,8 +86,8 @@ typedef DimmerDevice<Hal, DimChannel, 3, 3> DimDevice;
 DimDevice sdev(devinfo, 0x20);
 DimmerControl<Hal,DimDevice,ZC_Control<>> control(sdev);
 ConfigButton<DimDevice> cfgBtn(sdev);
-InternalButton<DimDevice> btn1(sdev, 4);
-InternalButton<DimDevice> btn2(sdev, 5);
+InternalButton<DimDevice> btn1(sdev, 1);
+InternalButton<DimDevice> btn2(sdev, 2);
 
 class OverloadSens : public Alarm {
   uint8_t overloadcount = 0;
@@ -139,7 +138,9 @@ TempSens tempsensor;
 void setup () {
   DINIT(57600, ASKSIN_PLUS_PLUS_IDENTIFIER);
   if( control.init(hal,DIMMERPIN) ){
-  sdev.channel(1).peer(btn1.peer(), btn2.peer());
+    sdev.channel(1).peer(btn1.peer(), btn2.peer());
+    sdev.channel(2).peer(btn1.peer(), btn2.peer());
+    sdev.channel(3).peer(btn1.peer(), btn2.peer());
   }
  
   buttonISR(cfgBtn, CONFIG_BUTTON_PIN);
