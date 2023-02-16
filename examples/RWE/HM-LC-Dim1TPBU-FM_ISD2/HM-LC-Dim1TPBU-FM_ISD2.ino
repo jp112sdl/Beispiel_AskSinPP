@@ -11,20 +11,20 @@
 //#define USE_OTA_BOOTLOADER
 
 // Arduino IDE Settings
-// use support for 644 from MightyCore: https://github.com/MCUdude/MightyCore
+// use support for 644PA from MightyCore: https://github.com/MCUdude/MightyCore
 // settings:
 // Board:        ATMega644
 // EEPROM:       EEPROM retained
 // Pinout:       Standard
 // Clock:        8MHz external
-// Variant:      644
+// Variant:      644P / 644PA
 // BOD:          2.7V
 // Compiler LTO: Enabled
 
 #define NDEBUG
 
 // use external EEProm 24c32 via I2C 
-#define STORAGEDRIVER at24cX<0x50,128,32> 
+//#define STORAGEDRIVER at24cX<0x50,512,256>
 
 #define EI_NOTEXTERNAL
 #include <Wire.h>
@@ -68,7 +68,7 @@ const struct DeviceInfo PROGMEM devinfo = {
     {0x11,0x12,0x01},       // Device ID - lfd Nr 01 vergeben
     "HMDI1PBU01",           // Device Serial - lfd Nr 01 vergeben
     {0x00,0x68},            // Device Model
-    0x25,                   // Firmware Version
+    0x29,                   // Firmware Version
     as::DeviceType::Dimmer, // Device Type
     {0x01,0x00}             // Info Bytes
 };
