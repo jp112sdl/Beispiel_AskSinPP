@@ -50,8 +50,8 @@
 #define PIR_PIN1 14
 #define PIR_PIN2 15
 #ifdef USW_WMDO
-#define PIR_PIN3 255 //WMD only
-#define PIR_PIN4 255 //WMD only
+#define PIR_PIN3 255
+#define PIR_PIN4 255
 #else
 #define PIR_PIN3 16 //WMD only
 #define PIR_PIN4 17 //WMD only
