@@ -49,7 +49,7 @@
 // Arduino pins for the PIRs (2 PIRs * 2 channels each)
 #define PIR_PIN1 14
 #define PIR_PIN2 15
-#ifdef USW_WMDO
+#ifdef USE_WMDO
 #define PIR_PIN3 255
 #define PIR_PIN4 255
 #else
