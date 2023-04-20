@@ -3,7 +3,7 @@
 // 2016-10-31 papa Creative Commons - http://creativecommons.org/licenses/by-nc-sa/3.0/de/
 // 2023-04-18 modified by jp112sdl Creative Commons - http://creativecommons.org/licenses/by-nc-sa/3.0/de/
 // 2023-04-12 modified by Peter.matic Creative Commons - http://creativecommons.org/licenses/by-nc-sa/3.0/de/
-// ci-test=yes board=328p aes=no
+// ci-test=no board=328p aes=no
 //- -----------------------------------------------------------------------------------------------------------------------
 
 //copy LMSS.h into your sketch directory from here:
