@@ -140,6 +140,7 @@ public:
   
   void check() {  
       //Pegel des auslösenden Komparatorpins (tp) muss zwischen 10ms und 750ms H sein
+      //Der Pegel des komplementären Komparatorpins (pp) muss L bleiben
       timeout=750;    
       while (PINC & (1 << tp)) {
         if (timeout==0 || PINC & (1 << pp)) { disableWorking(1); return; }
@@ -164,7 +165,7 @@ public:
        _delay_ms(1); timeout--;
       }
 
-      //stand der H-Pegel des pp mind. 50ms an, so ist eine korrekte
+      //stand der H-Pegel des pp mind. 30ms an, so ist eine korrekte
       //Bewegung erkannt worden
       if (timeout == 0) {
         device.channel(1).motionDetected();
@@ -189,8 +190,6 @@ if (PIR_PIN4 != 0xff) { pinMode(PIR_PIN4,INPUT); enableInterrupt(PIR_PIN4,device
 
 void setup () {
   DINIT(57600,ASKSIN_PLUS_PLUS_IDENTIFIER);
-  pinMode(A0, INPUT);
-  pinMode(A1, INPUT);
   sdev.init(hal);
   buttonISR(cfgBtn,CONFIG_BUTTON_PIN);  
   hal.initBattery(60UL*60,BAT_VOLT_LOW,BAT_VOLT_CRITICAL); // Measure Battery every 1h
